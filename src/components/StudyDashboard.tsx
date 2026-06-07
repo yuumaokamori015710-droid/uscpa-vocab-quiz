@@ -2,13 +2,12 @@
 
 import { useMemo, useState } from "react";
 import type { FormEvent, InputHTMLAttributes, ReactNode, SelectHTMLAttributes } from "react";
-import { abitusCourses } from "@/data/abitusCourses";
+import { studyTracks } from "@/data/studyTracks";
 import { useLearningStore } from "@/store/useLearningStore";
 import type { CpaStudySubject, StudyGoal, StudyType } from "@/types";
 
-const subjects: CpaStudySubject[] = abitusCourses.map((course) => course.id);
+const subjects: CpaStudySubject[] = studyTracks.map((track) => track.id);
 const studyTypes: StudyType[] = ["Lecture", "MCQ", "TBS", "Review", "Vocabulary", "Other"];
-const defaultMaterialUrl = "https://member.abitus.co.jp/cpaevo/adaptive_learning/index";
 const weekdayKeys = ["monday", "tuesday", "wednesday", "thursday", "friday"] as const;
 const weekdayLabels: Record<(typeof weekdayKeys)[number], string> = {
   monday: "月",
@@ -63,14 +62,10 @@ export function StudyDashboard() {
         return acc;
       },
       {
-        "FAR1-3": 0,
-        "FAR4&5": 0,
+        FAR: 0,
         AUD: 0,
-        REG1: 0,
-        REG2: 0,
-        BAR: 0,
-        ISC: 0,
-        TCP: 0
+        REG: 0,
+        BAR: 0
       }
     );
   }, [studyLogs]);
@@ -85,7 +80,7 @@ export function StudyDashboard() {
     const formData = new FormData(event.currentTarget);
     addStudyLog({
       date: String(formData.get("date") || todayKey()),
-      subject: String(formData.get("subject") || "FAR1-3") as CpaStudySubject,
+      subject: String(formData.get("subject") || "FAR") as CpaStudySubject,
       hours: numberValue(formData.get("hours")),
       studyType: String(formData.get("studyType") || "Lecture") as StudyType,
       memo: String(formData.get("memo") || "")
@@ -101,7 +96,7 @@ export function StudyDashboard() {
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--accent)]">USCPA Overall Study Pacemaker</p>
             <h2 className="mt-2 text-xl font-semibold text-[var(--text)]">USCPA全体の進捗</h2>
             <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
-              単語クイズの解答数ではなく、Abitus教材を含むUSCPA学習全体の手動記録から計算します。
+              単語クイズの解答数ではなく、講義・MCQ・TBS・復習などUSCPA学習全体の手動記録から計算します。
             </p>
           </div>
           <div className="grid gap-2 text-right">
@@ -109,14 +104,6 @@ export function StudyDashboard() {
               <p className="text-xs text-[var(--muted)]">Current Subject</p>
               <p className="mt-1 text-sm font-semibold text-[var(--text)]">{studyGoal.currentSubject}</p>
             </div>
-            <a
-              href={studyGoal.materialUrl || defaultMaterialUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="rounded-md border border-[var(--border)] px-4 py-2 text-center text-sm font-semibold text-[var(--accent)] hover:bg-[var(--hover)]"
-            >
-              Abitus教材を開く
-            </a>
           </div>
         </div>
 
@@ -198,7 +185,7 @@ export function StudyDashboard() {
             </div>
             <div className="sm:col-span-2">
               <FieldLabel>メモ</FieldLabel>
-              <TextInput name="memo" placeholder="Abitus FAR Lecture 1、MCQ 30問、TBS復習など" />
+              <TextInput name="memo" placeholder="FAR Lecture、MCQ 30問、TBS復習など" />
             </div>
           </div>
           <button className="mt-4 h-11 w-full rounded-md bg-[var(--accent)] text-sm font-semibold text-[var(--background)]">
@@ -209,10 +196,6 @@ export function StudyDashboard() {
         <form onSubmit={handleGoalSubmit} className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-5">
           <h2 className="text-xl font-semibold text-[var(--text)]">目標設定</h2>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            <div className="sm:col-span-2">
-              <FieldLabel>教材URL</FieldLabel>
-              <TextInput value={goalDraft.materialUrl} onChange={(event) => setGoalDraft({ ...goalDraft, materialUrl: event.target.value })} />
-            </div>
             <div>
               <FieldLabel>学習開始日</FieldLabel>
               <TextInput type="date" value={goalDraft.startDate} onChange={(event) => setGoalDraft({ ...goalDraft, startDate: event.target.value })} />
@@ -325,45 +308,34 @@ export function StudyDashboard() {
       <div className="xl:col-span-2 rounded-lg border border-[var(--border)] bg-[var(--card)] p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-[var(--text)]">Abitus教材別進捗</h2>
+            <h2 className="text-xl font-semibold text-[var(--text)]">USCPA科目別進捗</h2>
             <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
-              Abitusの学習進捗ページに合わせて、Webプラクティスの章単位で見られる科目構造を反映しています。
+              教材ブランドに依存しない汎用トラックです。講義、問題演習、復習、模試対策の時間を科目ごとに積み上げます。
             </p>
           </div>
-          <a
-            href="https://member.abitus.co.jp/cpaevo/adaptive_learning"
-            target="_blank"
-            rel="noreferrer"
-            className="rounded-md border border-[var(--border)] px-4 py-2 text-center text-sm font-semibold text-[var(--accent)] hover:bg-[var(--hover)]"
-          >
-            アダプティブ演習
-          </a>
         </div>
         <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          {abitusCourses.map((course) => {
-            const target = studyGoal.subjectTargetHours[course.id] ?? 0;
-            const studied = subjectStudiedHours[course.id] ?? 0;
+          {studyTracks.map((track) => {
+            const target = studyGoal.subjectTargetHours[track.id] ?? 0;
+            const studied = subjectStudiedHours[track.id] ?? 0;
             const rate = target === 0 ? 0 : Math.min(100, roundHours((studied / target) * 100));
 
             return (
-              <div key={course.id} className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4">
+              <div key={track.id} className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="font-semibold text-[var(--text)]">{course.label}</p>
-                    <p className="mt-1 text-xs text-[var(--muted)]">{course.coreExamArea}</p>
+                    <p className="font-semibold text-[var(--text)]">{track.label}</p>
+                    <p className="mt-1 text-xs text-[var(--muted)]">{track.description}</p>
                   </div>
-                  <a href={course.progressUrl} target="_blank" rel="noreferrer" className="text-xs font-semibold text-[var(--accent)]">
-                    進捗
-                  </a>
                 </div>
                 <div className="mt-3 h-2 overflow-hidden rounded-full bg-[var(--card)]">
                   <div className="h-full bg-[var(--accent)]" style={{ width: `${rate}%` }} />
                 </div>
                 <p className="mt-2 text-xs text-[var(--muted)]">{studied}/{target}h</p>
                 <ul className="mt-3 space-y-1">
-                  {course.chapters.slice(0, 3).map((chapter) => (
-                    <li key={chapter} className="truncate text-xs text-[var(--subtle)]" title={chapter}>
-                      {chapter}
+                  {track.units.slice(0, 4).map((unit) => (
+                    <li key={unit} className="truncate text-xs text-[var(--subtle)]" title={unit}>
+                      {unit}
                     </li>
                   ))}
                 </ul>

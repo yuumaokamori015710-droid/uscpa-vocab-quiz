@@ -1,6 +1,6 @@
 export type Subject = "FAR" | "AUD" | "REG" | "BAR";
 
-export type CpaStudySubject = "FAR1-3" | "FAR4&5" | "AUD" | "REG1" | "REG2" | "BAR" | "ISC" | "TCP";
+export type CpaStudySubject = Subject;
 
 export type WordStatus = "New" | "Learning" | "Mastered";
 
@@ -46,7 +46,6 @@ export type WeakWord = {
 };
 
 export type StudyGoal = {
-  materialUrl: string;
   startDate: string;
   targetDate: string;
   targetTotalHours: number;
@@ -88,10 +87,9 @@ export type ProgressSummary = {
   };
 };
 
-export type AbitusCourse = {
+export type StudyTrack = {
   id: CpaStudySubject;
   label: string;
-  coreExamArea: Subject | "ISC" | "TCP";
-  progressUrl: string;
-  chapters: string[];
+  description: string;
+  units: string[];
 };

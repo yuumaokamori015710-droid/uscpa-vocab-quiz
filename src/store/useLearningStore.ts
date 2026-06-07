@@ -55,19 +55,14 @@ const hoursBetween = (start: string, end: string) => {
 const roundHours = (value: number) => Math.round(value * 10) / 10;
 
 const defaultStudyGoal: StudyGoal = {
-  materialUrl: "https://member.abitus.co.jp/cpaevo/adaptive_learning/index",
   startDate: "2026-06-01",
   targetDate: "2027-04-30",
   targetTotalHours: 900,
   subjectTargetHours: {
-    "FAR1-3": 180,
-    "FAR4&5": 120,
-    AUD: 170,
-    REG1: 120,
-    REG2: 140,
-    BAR: 120,
-    ISC: 25,
-    TCP: 25
+    FAR: 260,
+    AUD: 210,
+    REG: 230,
+    BAR: 200
   },
   weeklyAvailableHours: 6,
   weekdayPlan: {
@@ -79,23 +74,12 @@ const defaultStudyGoal: StudyGoal = {
     hoursPerDay: 4
   },
   currentCumulativeHours: 0,
-  currentSubject: "FAR1-3",
-  unpassedSubjects: ["FAR1-3", "FAR4&5", "AUD", "REG1", "REG2", "BAR", "ISC", "TCP"]
+  currentSubject: "FAR",
+  unpassedSubjects: ["FAR", "AUD", "REG", "BAR"]
 };
 
 const normalizeStudySubject = (value: unknown): StudyGoal["currentSubject"] => {
-  if (value === "FAR") return "FAR1-3";
-  if (value === "REG") return "REG1";
-  if (
-    value === "FAR1-3" ||
-    value === "FAR4&5" ||
-    value === "AUD" ||
-    value === "REG1" ||
-    value === "REG2" ||
-    value === "BAR" ||
-    value === "ISC" ||
-    value === "TCP"
-  ) {
+  if (value === "FAR" || value === "AUD" || value === "REG" || value === "BAR") {
     return value;
   }
   return defaultStudyGoal.currentSubject;
@@ -274,14 +258,10 @@ export const useLearningStore = create<LearningState>()(
           ...persistedGoal?.subjectTargetHours
         };
 
-        if ("FAR" in subjectTargetHours) {
-          subjectTargetHours["FAR1-3"] = subjectTargetHours["FAR1-3"] || Number(subjectTargetHours.FAR) || defaultStudyGoal.subjectTargetHours["FAR1-3"];
-          delete subjectTargetHours.FAR;
-        }
-        if ("REG" in subjectTargetHours) {
-          subjectTargetHours.REG1 = subjectTargetHours.REG1 || Number(subjectTargetHours.REG) || defaultStudyGoal.subjectTargetHours.REG1;
-          delete subjectTargetHours.REG;
-        }
+        subjectTargetHours.FAR = Number(subjectTargetHours.FAR) || defaultStudyGoal.subjectTargetHours.FAR;
+        subjectTargetHours.AUD = Number(subjectTargetHours.AUD) || defaultStudyGoal.subjectTargetHours.AUD;
+        subjectTargetHours.REG = Number(subjectTargetHours.REG) || defaultStudyGoal.subjectTargetHours.REG;
+        subjectTargetHours.BAR = Number(subjectTargetHours.BAR) || defaultStudyGoal.subjectTargetHours.BAR;
 
         return {
           ...current,
@@ -289,7 +269,6 @@ export const useLearningStore = create<LearningState>()(
           studyGoal: {
             ...defaultStudyGoal,
             ...persistedGoal,
-            materialUrl: persistedGoal?.materialUrl || defaultStudyGoal.materialUrl,
             subjectTargetHours,
             currentSubject: normalizeStudySubject(persistedGoal?.currentSubject),
             unpassedSubjects: persistedGoal?.unpassedSubjects?.map(normalizeStudySubject) || defaultStudyGoal.unpassedSubjects
