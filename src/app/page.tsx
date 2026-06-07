@@ -2,9 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
+import type { AppView } from "@/components/AppShell";
 import { FriendsPanel } from "@/components/FriendsPanel";
 import { QuizPanel } from "@/components/QuizPanel";
 import { ResultPanel } from "@/components/ResultPanel";
+import { SettingsPanel } from "@/components/SettingsPanel";
 import { StatCard } from "@/components/StatCard";
 import { StudyDashboard } from "@/components/StudyDashboard";
 import { SubjectPicker } from "@/components/SubjectPicker";
@@ -14,10 +16,10 @@ import { wordRepository } from "@/lib/repositories/wordRepository";
 import { useLearningStore } from "@/store/useLearningStore";
 import type { Friend, Subject, Word } from "@/types";
 
-type View = "home" | "quiz" | "result" | "weak" | "friends";
+type View = AppView | "quiz" | "result";
 
 export default function Home() {
-  const [view, setView] = useState<View>("home");
+  const [view, setView] = useState<View>("quizHome");
   const [words, setWords] = useState<Word[]>([]);
   const [quizWords, setQuizWords] = useState<Word[]>([]);
   const [quizSubject, setQuizSubject] = useState<Subject | "Weak">("FAR");
@@ -26,14 +28,9 @@ export default function Home() {
 
   const resetSession = useLearningStore((state) => state.resetSession);
   const getStats = useLearningStore((state) => state.getStats);
-  const getProgressSummary = useLearningStore((state) => state.getProgressSummary);
   const answers = useLearningStore((state) => state.answers);
-  const studyGoal = useLearningStore((state) => state.studyGoal);
-  const studyLogs = useLearningStore((state) => state.studyLogs);
   const stats = getStats();
-  const todayStudyHours = useLearningStore((state) => state.getTodayStudyHours());
-  const weeklyStudyHours = useLearningStore((state) => state.getWeeklyStudyHours());
-  const progress = useMemo(() => getProgressSummary(), [getProgressSummary, studyGoal, studyLogs]);
+  const weakCount = useLearningStore((state) => Object.values(state.weakWords).filter((word) => word.status !== "Mastered").length);
 
   useEffect(() => {
     setMounted(true);
@@ -44,8 +41,6 @@ export default function Home() {
     friendRepository.getWeeklyRanking(stats).then(setFriends);
   }, [answers.length, stats.accuracyRate, stats.streak, stats.weeklyAnswered]);
 
-  const weakCount = useLearningStore((state) => Object.values(state.weakWords).filter((word) => word.status !== "Mastered").length);
-
   const deckCounts = useMemo(() => {
     return words.reduce<Record<Subject, number>>(
       (acc, word) => {
@@ -55,6 +50,8 @@ export default function Home() {
       { FAR: 0, AUD: 0, REG: 0, BAR: 0 }
     );
   }, [words]);
+
+  const activeView: AppView = view === "quiz" || view === "result" ? "quizHome" : view;
 
   const startSubjectQuiz = async (subject: Subject) => {
     const subjectWords = await wordRepository.findBySubject(subject);
@@ -73,7 +70,7 @@ export default function Home() {
 
   if (!mounted) {
     return (
-      <AppShell activeView="home" onNavigate={(next) => setView(next)}>
+      <AppShell activeView="quizHome" onNavigate={(next) => setView(next)}>
         <section className="mt-8 rounded-lg border border-[var(--border)] bg-[var(--card)] p-8 text-sm text-[var(--muted)]">
           Loading...
         </section>
@@ -82,27 +79,23 @@ export default function Home() {
   }
 
   return (
-    <AppShell activeView={view === "quiz" || view === "result" ? "home" : view} onNavigate={(next) => setView(next)}>
-      {view === "home" ? (
+    <AppShell activeView={activeView} onNavigate={(next) => setView(next)}>
+      {view === "quizHome" ? (
         <>
-          <section className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <SubjectPicker onStart={startSubjectQuiz} />
+
+          <section className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <StatCard label="今日の解答数" value={stats.todayAnswered} caption="Daily answers" />
             <StatCard label="今週の解答数" value={stats.weeklyAnswered} caption="Weekly answers" />
-            <StatCard label="今日の自学時間" value={`${todayStudyHours}h`} caption="Manual study" />
-            <StatCard label="今週の自学時間" value={`${weeklyStudyHours}h`} caption="Weekly study" />
-            <StatCard label="USCPA累計学習" value={`${progress.totalStudiedHours}h`} caption={`${progress.progressRate}% of total goal`} />
-            <StatCard label="USCPA目標平均との差" value={`${progress.deficitHours}h`} caption="Overall study deficit" />
-            <StatCard label="今週あと必要" value={`${progress.requiredThisWeekHours}h`} caption="USCPA total study" />
+            <StatCard label="正答率" value={`${stats.accuracyRate}%`} caption="Vocabulary accuracy" />
             <StatCard label="Streak" value={`${stats.streak}日`} caption={`${weakCount} weak words`} />
           </section>
 
-          <section className="mt-8 rounded-lg border border-[var(--border)] bg-[var(--card)] p-5">
-            <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-center">
+          <section className="mt-6 rounded-lg border border-[var(--border)] bg-[var(--card)] p-5">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
-                <h2 className="text-xl font-semibold text-[var(--text)]">Vocabulary Quiz History</h2>
-                <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
-                  この欄は単語クイズの履歴です。USCPA全体の学習時間と進捗は下のペースメーカーで別管理します。
-                </p>
+                <h2 className="text-xl font-semibold text-[var(--text)]">Vocabulary Decks</h2>
+                <p className="mt-2 text-sm leading-6 text-[var(--muted)]">単語クイズの進捗だけをここで確認できます。USCPA全体の学習時間はStudyタブで管理します。</p>
               </div>
               <div className="grid grid-cols-4 gap-2 text-center">
                 {Object.entries(deckCounts).map(([subject, count]) => (
@@ -114,12 +107,10 @@ export default function Home() {
               </div>
             </div>
           </section>
-
-          <StudyDashboard />
-
-          <SubjectPicker onStart={startSubjectQuiz} />
         </>
       ) : null}
+
+      {view === "study" ? <StudyDashboard /> : null}
 
       {view === "quiz" ? (
         <QuizPanel
@@ -127,13 +118,14 @@ export default function Home() {
           words={quizWords}
           allWords={words}
           onFinish={() => setView("result")}
-          onCancel={() => setView("home")}
+          onCancel={() => setView("quizHome")}
         />
       ) : null}
 
-      {view === "result" ? <ResultPanel onHome={() => setView("home")} /> : null}
+      {view === "result" ? <ResultPanel onHome={() => setView("quizHome")} /> : null}
       {view === "weak" ? <WeakWordsPanel words={words} onReview={startWeakQuiz} /> : null}
       {view === "friends" ? <FriendsPanel friends={friends} /> : null}
+      {view === "settings" ? <SettingsPanel /> : null}
     </AppShell>
   );
 }

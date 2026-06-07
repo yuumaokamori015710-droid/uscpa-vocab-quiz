@@ -13,11 +13,12 @@ type SubjectPickerProps = {
 
 export function SubjectPicker({ onStart }: SubjectPickerProps) {
   return (
-    <section className="mt-8">
-      <div className="flex items-end justify-between gap-4">
+    <section className="mt-8 rounded-lg border border-[var(--border)] bg-[var(--card)] p-5">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-[var(--text)]">Subject Selection</h2>
-          <p className="mt-2 text-sm text-[var(--muted)]">科目を選ぶと20問のデッキからクイズを開始します。</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--accent)]">Start Quiz</p>
+          <h2 className="mt-2 text-2xl font-semibold text-[var(--text)]">クイズを開始</h2>
+          <p className="mt-2 text-sm text-[var(--muted)]">科目を選ぶと、20語のデッキから4択クイズを開始します。</p>
         </div>
       </div>
       <div className="mt-4 grid gap-3 md:grid-cols-4">
@@ -25,7 +26,7 @@ export function SubjectPicker({ onStart }: SubjectPickerProps) {
           <button
             key={subject.id}
             onClick={() => onStart(subject.id)}
-            className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-5 text-left transition hover:-translate-y-0.5 hover:border-[var(--accent)] hover:bg-[var(--hover)]"
+            className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5 text-left transition hover:-translate-y-0.5 hover:border-[var(--accent)] hover:bg-[var(--hover)]"
           >
             <span className="text-2xl font-semibold text-[var(--accent)]">{subject.title}</span>
             <span className="mt-4 block text-sm leading-6 text-[var(--muted)]">{subject.description}</span>
