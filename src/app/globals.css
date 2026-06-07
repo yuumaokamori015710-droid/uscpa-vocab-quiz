@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+:root {
+  --background: #0f1115;
+  --card: #181b22;
+  --surface: #11141a;
+  --text: #eaecef;
+  --subtle: #c9ced8;
+  --muted: #9aa3b2;
+  --accent: #c9a227;
+  --correct: #2e7d5b;
+  --wrong: #8a2d2d;
+  --border: rgba(255, 255, 255, 0.08);
+  --hover: rgba(255, 255, 255, 0.05);
+  --accent-soft: rgba(201, 162, 39, 0.14);
+}
+
+:root[data-theme="light"] {
+  --background: #f7f8fa;
+  --card: #ffffff;
+  --surface: #f0f2f5;
+  --text: #171a20;
+  --subtle: #3e4653;
+  --muted: #687283;
+  --accent: #9a7618;
+  --correct: #2e7d5b;
+  --wrong: #8a2d2d;
+  --border: rgba(18, 24, 32, 0.1);
+  --hover: rgba(18, 24, 32, 0.05);
+  --accent-soft: rgba(154, 118, 24, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--background);
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  background:
+    radial-gradient(circle at 18% 0%, var(--accent-soft), transparent 28rem),
+    linear-gradient(180deg, var(--surface) 0%, var(--background) 38%);
+  color: var(--text);
+  font-family: Arial, Helvetica, sans-serif;
+  letter-spacing: 0;
+}
+
+button {
+  font: inherit;
+}
+
+::selection {
+  background: rgba(201, 162, 39, 0.32);
+}
