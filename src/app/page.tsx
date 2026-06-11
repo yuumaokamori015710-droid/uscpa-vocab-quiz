@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import type { AppView } from "@/components/AppShell";
+import { AuditQuestionPanel } from "@/components/AuditQuestionPanel";
 import { FriendsPanel } from "@/components/FriendsPanel";
 import { QuizPanel } from "@/components/QuizPanel";
 import { ResultPanel } from "@/components/ResultPanel";
@@ -12,9 +13,10 @@ import { StudyDashboard } from "@/components/StudyDashboard";
 import { SubjectPicker } from "@/components/SubjectPicker";
 import { WeakWordsPanel } from "@/components/WeakWordsPanel";
 import { friendRepository } from "@/lib/repositories/friendRepository";
+import { questionRepository } from "@/lib/repositories/questionRepository";
 import { wordRepository } from "@/lib/repositories/wordRepository";
 import { useLearningStore } from "@/store/useLearningStore";
-import type { Friend, Subject, Word } from "@/types";
+import type { Friend, Question, Subject, Word } from "@/types";
 
 type View = AppView | "quiz" | "result";
 
@@ -23,6 +25,7 @@ export default function Home() {
   const [words, setWords] = useState<Word[]>([]);
   const [quizWords, setQuizWords] = useState<Word[]>([]);
   const [quizSubject, setQuizSubject] = useState<Subject | "Weak">("FAR");
+  const [questions, setQuestions] = useState<Question[]>([]);
   const [friends, setFriends] = useState<Friend[]>([]);
   const [mounted, setMounted] = useState(false);
 
@@ -35,6 +38,7 @@ export default function Home() {
   useEffect(() => {
     setMounted(true);
     wordRepository.findAll().then(setWords);
+    questionRepository.findAll().then(setQuestions);
   }, []);
 
   useEffect(() => {
@@ -83,6 +87,8 @@ export default function Home() {
       {view === "quizHome" ? (
         <>
           <SubjectPicker onStart={startSubjectQuiz} />
+
+          <AuditQuestionPanel questions={questions.filter((question) => question.subject === "AUD")} />
 
           <section className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <StatCard label="今日の解答数" value={stats.todayAnswered} caption="Daily answers" />

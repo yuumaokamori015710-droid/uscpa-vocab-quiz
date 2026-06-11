@@ -8,6 +8,8 @@ export type StudyType = "Lecture" | "MCQ" | "TBS" | "Review" | "Vocabulary" | "O
 
 export type ThemeMode = "dark" | "light";
 
+export type QuestionDifficulty = "Easy" | "Medium" | "Hard";
+
 export type Word = {
   id: string;
   term: string;
@@ -20,6 +22,33 @@ export type Answer = {
   wordId: string;
   isCorrect: boolean;
   answeredAt: string;
+};
+
+export type Question = {
+  id: string;
+  subject: Subject;
+  category: string;
+  topic: string;
+  difficulty: QuestionDifficulty;
+  question: string;
+  choices: string[];
+  correctAnswer: string;
+  explanationJa: string;
+  keyTakeaway: string;
+  trapExplanation: string;
+};
+
+export type QuestionAnswer = {
+  questionId: string;
+  isCorrect: boolean;
+  answeredAt: string;
+};
+
+export type ReviewQuestion = {
+  questionId: string;
+  mistakes: number;
+  lastAnsweredAt: string;
+  mastered: boolean;
 };
 
 export type UserStats = {

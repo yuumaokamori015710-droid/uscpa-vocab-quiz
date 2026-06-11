@@ -2,7 +2,7 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { Answer, ProgressSummary, StudyGoal, StudyLog, ThemeMode, UserStats, WeakWord, Word } from "@/types";
+import type { Answer, ProgressSummary, Question, QuestionAnswer, ReviewQuestion, StudyGoal, StudyLog, ThemeMode, UserStats, WeakWord, Word } from "@/types";
 
 type SessionResult = {
   answered: number;
@@ -13,20 +13,29 @@ type SessionResult = {
 type LearningState = {
   theme: ThemeMode;
   answers: Answer[];
+  questionAnswers: QuestionAnswer[];
   weakWords: Record<string, WeakWord>;
+  reviewQuestions: Record<string, ReviewQuestion>;
   studyGoal: StudyGoal;
   studyLogs: StudyLog[];
   sessionAnswers: Answer[];
+  questionSessionAnswers: QuestionAnswer[];
   lastSessionResult: SessionResult | null;
+  lastQuestionSessionResult: SessionResult | null;
   setTheme: (theme: ThemeMode) => void;
   recordAnswer: (word: Word, isCorrect: boolean) => void;
+  recordQuestionAnswer: (question: Question, isCorrect: boolean) => void;
   updateStudyGoal: (goal: StudyGoal) => void;
   addStudyLog: (log: Omit<StudyLog, "id">) => void;
   deleteStudyLog: (id: string) => void;
   resetSession: () => void;
+  resetQuestionSession: () => void;
   finishSession: (subjectLabel: string) => void;
+  finishQuestionSession: (subjectLabel: string) => void;
   markWeakWordStatus: (wordId: string, status: WeakWord["status"]) => void;
+  markReviewQuestionMastered: (questionId: string, mastered: boolean) => void;
   getStats: () => UserStats;
+  getQuestionStats: () => UserStats;
   getProgressSummary: () => ProgressSummary;
   getTodayStudyHours: () => number;
   getWeeklyStudyHours: () => number;
@@ -105,11 +114,15 @@ export const useLearningStore = create<LearningState>()(
     (set, get) => ({
       theme: "dark",
       answers: [],
+      questionAnswers: [],
       weakWords: {},
+      reviewQuestions: {},
       studyGoal: defaultStudyGoal,
       studyLogs: [],
       sessionAnswers: [],
+      questionSessionAnswers: [],
       lastSessionResult: null,
+      lastQuestionSessionResult: null,
 
       setTheme: (theme) => set({ theme }),
 
@@ -144,6 +157,37 @@ export const useLearningStore = create<LearningState>()(
         });
       },
 
+      recordQuestionAnswer: (question, isCorrect) => {
+        const answeredAt = new Date().toISOString();
+        const answer: QuestionAnswer = { questionId: question.id, isCorrect, answeredAt };
+
+        set((state) => {
+          const nextReviewQuestions = { ...state.reviewQuestions };
+          const current = nextReviewQuestions[question.id];
+
+          if (!isCorrect) {
+            nextReviewQuestions[question.id] = {
+              questionId: question.id,
+              mistakes: (current?.mistakes ?? 0) + 1,
+              mastered: false,
+              lastAnsweredAt: answeredAt
+            };
+          } else if (current && !current.mastered) {
+            nextReviewQuestions[question.id] = {
+              ...current,
+              mastered: current.mistakes <= 1,
+              lastAnsweredAt: answeredAt
+            };
+          }
+
+          return {
+            questionAnswers: [...state.questionAnswers, answer],
+            questionSessionAnswers: [...state.questionSessionAnswers, answer],
+            reviewQuestions: nextReviewQuestions
+          };
+        });
+      },
+
       updateStudyGoal: (goal) => set({ studyGoal: goal }),
 
       addStudyLog: (log) => {
@@ -161,10 +205,23 @@ export const useLearningStore = create<LearningState>()(
 
       resetSession: () => set({ sessionAnswers: [], lastSessionResult: null }),
 
+      resetQuestionSession: () => set({ questionSessionAnswers: [], lastQuestionSessionResult: null }),
+
       finishSession: (subjectLabel) => {
         const sessionAnswers = get().sessionAnswers;
         set({
           lastSessionResult: {
+            answered: sessionAnswers.length,
+            correct: sessionAnswers.filter((answer) => answer.isCorrect).length,
+            subjectLabel
+          }
+        });
+      },
+
+      finishQuestionSession: (subjectLabel) => {
+        const sessionAnswers = get().questionSessionAnswers;
+        set({
+          lastQuestionSessionResult: {
             answered: sessionAnswers.length,
             correct: sessionAnswers.filter((answer) => answer.isCorrect).length,
             subjectLabel
@@ -185,6 +242,19 @@ export const useLearningStore = create<LearningState>()(
         });
       },
 
+      markReviewQuestionMastered: (questionId, mastered) => {
+        set((state) => {
+          const reviewQuestion = state.reviewQuestions[questionId];
+          if (!reviewQuestion) return state;
+          return {
+            reviewQuestions: {
+              ...state.reviewQuestions,
+              [questionId]: { ...reviewQuestion, mastered }
+            }
+          };
+        });
+      },
+
       getStats: () => {
         const answers = get().answers;
         const now = new Date();
@@ -198,6 +268,22 @@ export const useLearningStore = create<LearningState>()(
           weeklyAnswered: answers.filter((answer) => new Date(answer.answeredAt) >= weekStart).length,
           accuracyRate: answers.length === 0 ? 0 : Math.round((correct / answers.length) * 100),
           streak: calculateStreak(answers)
+        };
+      },
+
+      getQuestionStats: () => {
+        const answers = get().questionAnswers;
+        const now = new Date();
+        const todayKey = toDateKey(now);
+        const weekStart = startOfWeek(now);
+        const correct = answers.filter((answer) => answer.isCorrect).length;
+
+        return {
+          totalAnswered: answers.length,
+          todayAnswered: answers.filter((answer) => toDateKey(new Date(answer.answeredAt)) === todayKey).length,
+          weeklyAnswered: answers.filter((answer) => new Date(answer.answeredAt) >= weekStart).length,
+          accuracyRate: answers.length === 0 ? 0 : Math.round((correct / answers.length) * 100),
+          streak: calculateStreak(answers.map((answer) => ({ wordId: answer.questionId, isCorrect: answer.isCorrect, answeredAt: answer.answeredAt })))
         };
       },
 
