@@ -29,13 +29,16 @@ export type Question = {
   subject: Subject;
   category: string;
   topic: string;
+  concept?: string;
   difficulty: QuestionDifficulty;
   question: string;
   choices: string[];
   correctAnswer: string;
   explanationJa: string;
   keyTakeaway: string;
+  examTechnique?: string;
   trapExplanation: string;
+  relatedTopics?: string[];
 };
 
 export type QuestionAnswer = {

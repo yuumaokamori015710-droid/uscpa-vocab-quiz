@@ -88,7 +88,7 @@ export default function Home() {
         <>
           <SubjectPicker onStart={startSubjectQuiz} />
 
-          <AuditQuestionPanel questions={questions.filter((question) => question.subject === "AUD")} />
+          <AuditQuestionPanel questions={questions} />
 
           <section className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <StatCard label="今日の解答数" value={stats.todayAnswered} caption="Daily answers" />

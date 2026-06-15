@@ -1,4 +1,5 @@
 import { audQuestions } from "@/data/audQuestions";
+import { farQuestions } from "@/data/farQuestions";
 import type { Question, QuestionDifficulty, Subject } from "@/types";
 
 export type QuestionFilters = {
@@ -15,7 +16,7 @@ export interface QuestionRepository {
   findByIds(ids: string[]): Promise<Question[]>;
 }
 
-const questionSeeds = [...audQuestions];
+const questionSeeds = [...audQuestions, ...farQuestions];
 
 export class LocalQuestionRepository implements QuestionRepository {
   async findAll() {
