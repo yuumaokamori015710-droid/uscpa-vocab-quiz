@@ -11,13 +11,13 @@ type AuditQuestionPanelProps = {
 type Mode = "setup" | "quiz" | "result";
 
 const difficulties: Array<QuestionDifficulty | "All"> = ["All", "Easy", "Medium", "Hard"];
-const subjects: Array<Subject | "All"> = ["All", "FAR", "AUD", "REG", "BAR"];
+const practiceSubjects: Subject[] = ["FAR", "AUD"];
 
 const shuffle = <T,>(items: T[]) => [...items].sort(() => Math.random() - 0.5);
 
 export function AuditQuestionPanel({ questions }: AuditQuestionPanelProps) {
   const [mode, setMode] = useState<Mode>("setup");
-  const [subject, setSubject] = useState<Subject | "All">("All");
+  const [subject, setSubject] = useState<Subject>("FAR");
   const [category, setCategory] = useState("All");
   const [topic, setTopic] = useState("All");
   const [difficulty, setDifficulty] = useState<QuestionDifficulty | "All">("All");
@@ -35,31 +35,44 @@ export function AuditQuestionPanel({ questions }: AuditQuestionPanelProps) {
   const markReviewQuestionMastered = useLearningStore((state) => state.markReviewQuestionMastered);
   const questionStats = getQuestionStats();
 
+  const questionsBySubject = useMemo(() => {
+    return practiceSubjects.reduce<Record<Subject, Question[]>>(
+      (acc, nextSubject) => {
+        acc[nextSubject] = questions.filter((question) => question.subject === nextSubject);
+        return acc;
+      },
+      { FAR: [], AUD: [], REG: [], BAR: [] }
+    );
+  }, [questions]);
+
+  const subjectQuestions = questionsBySubject[subject];
+
   const activeReviewIds = useMemo(() => {
-    return new Set(Object.values(reviewQuestions).filter((item) => !item.mastered).map((item) => item.questionId));
-  }, [reviewQuestions]);
+    const subjectQuestionIds = new Set(subjectQuestions.map((question) => question.id));
+    return new Set(
+      Object.values(reviewQuestions)
+        .filter((item) => !item.mastered && subjectQuestionIds.has(item.questionId))
+        .map((item) => item.questionId)
+    );
+  }, [reviewQuestions, subjectQuestions]);
 
   const categories = useMemo(() => {
-    const source = subject === "All" ? questions : questions.filter((question) => question.subject === subject);
-    return ["All", ...Array.from(new Set(source.map((question) => question.category))).sort()];
-  }, [questions, subject]);
+    return ["All", ...Array.from(new Set(subjectQuestions.map((question) => question.category))).sort()];
+  }, [subjectQuestions]);
   const topics = useMemo(() => {
-    const subjectQuestions = subject === "All" ? questions : questions.filter((question) => question.subject === subject);
     const source = category === "All" ? subjectQuestions : subjectQuestions.filter((question) => question.category === category);
     return ["All", ...Array.from(new Set(source.map((question) => question.topic))).sort()];
-  }, [category, questions, subject]);
+  }, [category, subjectQuestions]);
 
   const filteredQuestions = useMemo(() => {
-    return questions.filter((question) => {
+    return subjectQuestions.filter((question) => {
       return (
-        (subject === "All" || question.subject === subject) &&
         (category === "All" || question.category === category) &&
         (topic === "All" || question.topic === topic) &&
-        (difficulty === "All" || question.difficulty === difficulty) &&
-        (!reviewOnly || activeReviewIds.has(question.id))
+        (difficulty === "All" || question.difficulty === difficulty)
       );
     });
-  }, [activeReviewIds, category, difficulty, questions, reviewOnly, subject, topic]);
+  }, [category, difficulty, subjectQuestions, topic]);
 
   const current = quizQuestions[index];
   const isAnswered = selected !== null;
@@ -86,7 +99,7 @@ export function AuditQuestionPanel({ questions }: AuditQuestionPanelProps) {
 
   const next = () => {
     if (isLast) {
-      finishQuestionSession(reviewOnly ? "Review Questions" : `${subject === "All" ? "USCPA" : subject} Questions`);
+      finishQuestionSession(reviewOnly ? `${subject} Review Questions` : `${subject} Questions`);
       setMode("result");
       return;
     }
@@ -99,12 +112,12 @@ export function AuditQuestionPanel({ questions }: AuditQuestionPanelProps) {
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--accent)]">USCPA MCQ Practice</p>
-          <h2 className="mt-2 text-2xl font-semibold text-[var(--text)]">USCPA問題演習</h2>
+          <h2 className="mt-2 text-2xl font-semibold text-[var(--text)]">FAR / AUD 問題演習</h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-[var(--muted)]">
-            FAR/AUDの論点から作成したオリジナル4択問題です。既存教材の問題文はコピーせず、論点・試験テクニックを練習できる形にしています。
+            科目を明示的に分けて演習します。問題は既存教材のコピーではなく、論点・試験テクニックを練習するためのオリジナル4択です。
           </p>
         </div>
-        <div className="grid grid-cols-3 gap-2 text-center sm:min-w-[22rem]">
+        <div className="grid grid-cols-3 gap-2 text-center sm:min-w-[20rem]">
           <MiniStat label="Today" value={questionStats.todayAnswered} />
           <MiniStat label="Week" value={questionStats.weeklyAnswered} />
           <MiniStat label="Review" value={reviewCount} />
@@ -113,8 +126,31 @@ export function AuditQuestionPanel({ questions }: AuditQuestionPanelProps) {
 
       {mode === "setup" ? (
         <>
-          <div className="mt-5 grid gap-3 md:grid-cols-4">
-            <FilterSelect label="Subject" value={subject} values={subjects} onChange={(value) => { setSubject(value as Subject | "All"); setCategory("All"); setTopic("All"); }} />
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            {practiceSubjects.map((nextSubject) => (
+              <button
+                key={nextSubject}
+                onClick={() => {
+                  setSubject(nextSubject);
+                  setCategory("All");
+                  setTopic("All");
+                }}
+                className={`rounded-lg border p-4 text-left transition ${
+                  subject === nextSubject
+                    ? "border-[var(--accent)] bg-[var(--accent-soft)]"
+                    : "border-[var(--border)] bg-[var(--surface)] hover:border-[var(--accent)] hover:bg-[var(--hover)]"
+                }`}
+              >
+                <span className="text-2xl font-semibold text-[var(--text)]">{nextSubject}</span>
+                <span className="ml-3 text-sm text-[var(--muted)]">{questionsBySubject[nextSubject].length}問</span>
+                <span className="mt-2 block text-sm text-[var(--muted)]">
+                  {nextSubject === "FAR" ? "会計処理・表示・測定の論点" : "監査手続・報告・内部統制の論点"}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          <div className="mt-5 grid gap-3 md:grid-cols-3">
             <FilterSelect label="Category" value={category} values={categories} onChange={(value) => { setCategory(value); setTopic("All"); }} />
             <FilterSelect label="Topic" value={topic} values={topics} onChange={setTopic} />
             <FilterSelect label="Difficulty" value={difficulty} values={difficulties} onChange={(value) => setDifficulty(value as QuestionDifficulty | "All")} />
@@ -122,14 +158,14 @@ export function AuditQuestionPanel({ questions }: AuditQuestionPanelProps) {
 
           <div className="mt-5 grid gap-3 md:grid-cols-[1fr_auto_auto] md:items-center">
             <div className="rounded-lg bg-[var(--surface)] p-4 text-sm text-[var(--muted)]">
-              条件に合う問題: <span className="font-semibold text-[var(--text)]">{filteredQuestions.length}</span> / seed {questions.length}問
+              {subject} 条件に合う問題: <span className="font-semibold text-[var(--text)]">{filteredQuestions.length}</span> / {subjectQuestions.length}問
             </div>
             <button
               onClick={() => startQuiz(false)}
               disabled={filteredQuestions.length === 0}
               className="h-11 rounded-md bg-[var(--accent)] px-5 text-sm font-semibold text-[var(--background)] disabled:cursor-not-allowed disabled:opacity-45"
             >
-              問題を開始
+              {subject}問題を開始
             </button>
             <button
               onClick={() => startQuiz(true)}
@@ -143,7 +179,7 @@ export function AuditQuestionPanel({ questions }: AuditQuestionPanelProps) {
       ) : null}
 
       {mode === "quiz" && current ? (
-        <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_20rem]">
+        <div className="mt-6 grid gap-4 lg:grid-cols-[1fr_20rem] lg:gap-6">
           <div className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex flex-wrap gap-2">
@@ -182,17 +218,37 @@ export function AuditQuestionPanel({ questions }: AuditQuestionPanelProps) {
             {isAnswered ? (
               <div className={`mt-5 rounded-lg border p-4 ${isCorrect ? "border-[var(--correct)]/70 bg-[var(--correct)]/14" : "border-[var(--wrong)]/70 bg-[var(--wrong)]/14"}`}>
                 <p className="text-lg font-semibold text-[var(--text)]">{isCorrect ? "Correct" : "Wrong"}</p>
-                <p className="mt-2 text-sm leading-6 text-[var(--subtle)]">{current.explanationJa}</p>
-                <p className="mt-3 text-sm font-semibold text-[var(--text)]">Key takeaway</p>
-                <p className="mt-1 text-sm leading-6 text-[var(--muted)]">{current.keyTakeaway}</p>
-                {current.examTechnique ? (
-                  <>
-                    <p className="mt-3 text-sm font-semibold text-[var(--text)]">Exam technique</p>
-                    <p className="mt-1 text-sm leading-6 text-[var(--muted)]">{current.examTechnique}</p>
-                  </>
-                ) : null}
-                <p className="mt-3 text-sm font-semibold text-[var(--text)]">Trap</p>
-                <p className="mt-1 text-sm leading-6 text-[var(--muted)]">{current.trapExplanation}</p>
+                <div className="mt-3 rounded-md bg-[var(--card)] p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--accent)]">試験のポイント</p>
+                  <p className="mt-2 text-sm font-semibold leading-6 text-[var(--text)]">{current.examTechnique ?? current.keyTakeaway}</p>
+                  {current.examTechnique && current.examTechnique !== current.keyTakeaway ? (
+                    <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{current.keyTakeaway}</p>
+                  ) : null}
+                </div>
+                <details className="mt-3 rounded-md border border-[var(--border)] bg-[var(--card)] p-4">
+                  <summary className="cursor-pointer text-sm font-semibold text-[var(--text)]">詳細解説を開く</summary>
+                  <div className="mt-4 space-y-4 text-sm leading-6 text-[var(--muted)]">
+                    <section>
+                      <p className="font-semibold text-[var(--text)]">解説</p>
+                      <p className="mt-1 whitespace-pre-line">{current.explanationJa}</p>
+                    </section>
+                    <section>
+                      <p className="font-semibold text-[var(--text)]">選択肢の見方</p>
+                      <ul className="mt-1 space-y-1">
+                        {current.choices.map((choice) => (
+                          <li key={choice} className={choice === current.correctAnswer ? "text-[var(--correct)]" : choice === selected ? "text-[var(--wrong)]" : ""}>
+                            {choice === current.correctAnswer ? "正解: " : choice === selected ? "選択: " : ""}
+                            {choice}
+                          </li>
+                        ))}
+                      </ul>
+                    </section>
+                    <section>
+                      <p className="font-semibold text-[var(--text)]">ひっかけポイント</p>
+                      <p className="mt-1">{current.trapExplanation}</p>
+                    </section>
+                  </div>
+                </details>
                 {current.relatedTopics?.length ? (
                   <p className="mt-3 text-xs text-[var(--muted)]">Related: {current.relatedTopics.join(" / ")}</p>
                 ) : null}
