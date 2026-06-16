@@ -1,14 +1,16 @@
-import type { Question, QuestionDifficulty } from "@/types";
+import type { Question, QuestionDifficulty, QuestionType } from "@/types";
 
 type FarQuestionSeed = {
   id: string;
   category: string;
   topic: string;
   concept: string;
+  questionType?: QuestionType;
   difficulty: QuestionDifficulty;
   question: string;
   choices: string[];
   correctAnswer: string;
+  explanationJa?: string;
   keyTakeaway: string;
   examTechnique: string;
   trapExplanation: string;
@@ -37,7 +39,7 @@ const buildExplanation = (seed: FarQuestionSeed) => {
 const q = (seed: FarQuestionSeed): Question => ({
   ...seed,
   subject: "FAR",
-  explanationJa: buildExplanation(seed)
+  explanationJa: seed.explanationJa ?? buildExplanation(seed)
 });
 
 export const farQuestions: Question[] = [
@@ -684,5 +686,245 @@ export const farQuestions: Question[] = [
     examTechnique: "Customer escrow deposit → liability until entitlement/conditions met.",
     trapExplanation: "Control of cash is not the same as satisfying a performance obligation or earning a fee.",
     relatedTopics: ["Escrow liabilities", "Revenue vs Gain"]
+  }),
+  q({
+    id: "far-q-047",
+    category: "Assets",
+    topic: "Depreciation / Salvage Value",
+    concept: "Depreciable base when salvage value exists",
+    questionType: "calculation",
+    difficulty: "Easy",
+    question: "Equipment costs $100,000, has a $10,000 salvage value, and is depreciated straight-line over 5 years. What is annual depreciation?",
+    choices: ["$18,000", "$20,000", "$22,000", "$10,000"],
+    correctAnswer: "$18,000",
+    explanationJa: "1. 問題のポイント: salvage value がある減価償却では、償却対象は original cost ではなく cost - salvage value です。\n2. 正解理由: ($100,000 - $10,000) / 5 years = $18,000。累計減価償却費も最終的に $90,000 を超えません。\n3. 各選択肢の検討: $18,000 が正解。$20,000 は salvage value を無視しています。$22,000 は根拠のない過大償却。$10,000 は salvage value そのものです。\n4. 試験テクニック: Salvage value present -> depreciable base is cost - salvage value.\n5. ひっかけポイント: 耐用年数終了時に original cost まで全部償却すると考えるミス。\n6. 一言まとめ: straight-line でも productive-output でも salvage value は先に控除します。",
+    keyTakeaway: "Depreciation is based on cost minus salvage value, not original cost.",
+    examTechnique: "Salvage value present -> depreciate only cost - salvage, never original cost.",
+    trapExplanation: "Many candidates depreciate the full original cost even when salvage value is given.",
+    relatedTopics: ["Straight-line depreciation", "Productive-output method"]
+  }),
+  q({
+    id: "far-q-048",
+    category: "Inventory",
+    topic: "Moving-average inventory / Perpetual system",
+    concept: "Moving-average unit cost after each purchase",
+    questionType: "calculation",
+    difficulty: "Medium",
+    question: "A perpetual inventory system has 100 units at $10, then purchases 50 units at $16 before selling 60 units. Under moving-average, what is COGS for the sale?",
+    choices: ["$720", "$600", "$960", "$800"],
+    correctAnswer: "$720",
+    explanationJa: "1. 問題のポイント: perpetual system の moving-average は、仕入のたびに平均単価を更新します。\n2. 正解理由: 購入後の平均単価 = (100 x $10 + 50 x $16) / 150 = $12。売上60個の COGS = 60 x $12 = $720。\n3. 各選択肢の検討: $720 が正解。$600 は旧単価 $10 のまま。$960 は新規仕入単価 $16 のみ使用。$800 は単純平均などの誤りです。\n4. 試験テクニック: Perpetual moving-average -> recalculate average after each purchase.\n5. ひっかけポイント: periodic weighted-average と混同して、期末まで平均を更新しないこと。\n6. 一言まとめ: moving-average in perpetual は purchase のたびに単価更新です。",
+    keyTakeaway: "Under a perpetual moving-average system, average cost is updated after each purchase.",
+    examTechnique: "Perpetual moving-average -> update unit cost after each purchase, then price the sale.",
+    trapExplanation: "Do not use periodic weighted-average timing when the problem states perpetual.",
+    relatedTopics: ["Inventory costing", "COGS"]
+  }),
+  q({
+    id: "far-q-049",
+    category: "Leases",
+    topic: "Operating lease liability",
+    concept: "Operating lease liability after payment",
+    questionType: "calculation",
+    difficulty: "Medium",
+    question: "A lessee makes the first annual operating lease payment. Four payments of $10,000 remain. The implicit rate is known and the ordinary annuity factor for 4 periods is 3.4651. The problem says to ignore any guaranteed residual value. What is the lease liability after the payment?",
+    choices: ["$34,651", "$40,000", "$44,651", "$30,000"],
+    correctAnswer: "$34,651",
+    explanationJa: "1. 問題のポイント: operating lease でも lessee は lease liability を認識します。支払後の liability は残り支払額の現在価値です。\n2. 正解理由: $10,000 x 3.4651 = $34,651。implicit rate が分かるのでその利率の factor を使います。ignore GRV とあるため guaranteed residual value は除外します。\n3. 各選択肢の検討: $34,651 が正解。$40,000 は割引前総額。$44,651 は支払済み分または不要項目を含めた誤り。$30,000 は回数またはfactorの取り違えです。\n4. 試験テクニック: Operating lease liability after payment -> PV of remaining lease payments.\n5. ひっかけポイント: operating lease だから liability がない、または GRV を ignore 指示でも含めるミス。\n6. 一言まとめ: 残り均等支払は ordinary annuity factor で現在価値にします。",
+    keyTakeaway: "Operating lease lessees recognize a lease liability measured as the PV of remaining lease payments.",
+    examTechnique: "After a lease payment -> use remaining payment count with the ordinary annuity factor; ignore GRV if instructed.",
+    trapExplanation: "Do not assume operating leases have no liability, and do not include a GRV when the question says to ignore it.",
+    relatedTopics: ["Lease liability measurement", "Ordinary annuity"]
+  }),
+  q({
+    id: "far-q-050",
+    category: "Liabilities",
+    topic: "Current liabilities",
+    concept: "Classification by settlement date",
+    questionType: "theory",
+    difficulty: "Easy",
+    question: "Which item is most likely classified as a current liability?",
+    choices: ["Senior bonds maturing in nine months", "A note payable due in eighteen months", "A contingent liability expected to settle in two years", "A deferred tax liability reversing in three years"],
+    correctAnswer: "Senior bonds maturing in nine months",
+    explanationJa: "1. 問題のポイント: current liability は、1年以内または営業循環期間内に決済される負債です。\n2. 正解理由: senior bonds という名称でも、maturity が9か月後なら current liability です。\n3. 各選択肢の検討: Senior bonds maturing in nine months が正解。18か月後の note、2年後決済見込みの contingent liability、3年後 reversing の deferred tax liability は通常 noncurrent です。\n4. 試験テクニック: Liability classification -> look at maturity/settlement date, not the label.\n5. ひっかけポイント: bonds = long-term と決めつけたり、coupon rate や senior という名称に引っ張られること。\n6. 一言まとめ: current/noncurrent は名前ではなく決済時期で判断します。",
+    keyTakeaway: "A liability due within one year or the operating cycle is current, even if it is a bond.",
+    examTechnique: "Current liability question -> ignore label/coupon; check maturity or settlement date.",
+    trapExplanation: "The word bond often makes candidates assume noncurrent even when maturity is within one year.",
+    relatedTopics: ["Classification", "Bonds payable"]
+  }),
+  q({
+    id: "far-q-051",
+    category: "Financial Statement Presentation",
+    topic: "Discontinued operations",
+    concept: "Strategic shift and major effect requirement",
+    questionType: "theory",
+    difficulty: "Medium",
+    question: "A company sells a small product line that qualifies as a component, but the disposal does not significantly change operations or financial results. How should management view discontinued operations presentation?",
+    choices: ["It usually does not qualify because a strategic shift with a major effect is missing", "It automatically qualifies because any component was sold", "It qualifies only if cash was collected before year-end", "It is reported in OCI"],
+    correctAnswer: "It usually does not qualify because a strategic shift with a major effect is missing",
+    explanationJa: "1. 問題のポイント: discontinued operations は component の disposal だけでは足りず、strategic shift かつ operations and financial results への major effect が必要です。\n2. 正解理由: 小さい product line で重要な変化がないなら、discontinued operations 表示には通常なりません。\n3. 各選択肢の検討: strategic shift missing が正解。component売却だけで自動判定は不可。現金回収時期は判定軸ではありません。OCI表示でもありません。\n4. 試験テクニック: Discontinued ops -> strategic shift + major effect.\n5. ひっかけポイント: 旧基準っぽい major line of business や component definition だけで飛びつくこと。\n6. 一言まとめ: discontinued operations は「大きな戦略転換」まで必要です。",
+    keyTakeaway: "Discontinued operations require a strategic shift that has a major effect on operations and financial results.",
+    examTechnique: "Discontinued ops -> ask: component disposed/held for sale AND strategic shift with major effect?",
+    trapExplanation: "A component disposal alone is not enough under current presentation rules.",
+    relatedTopics: ["Financial statement presentation", "Held for sale"]
+  }),
+  q({
+    id: "far-q-052",
+    category: "Liabilities",
+    topic: "Bonds interest expense period",
+    concept: "Expense period versus payable period",
+    questionType: "calculation",
+    difficulty: "Medium",
+    question: "A $100,000, 6% bond is issued on April 1. The fiscal year ends December 31, and interest is paid semiannually on April 1 and October 1. Ignoring premium or discount, what is bond interest expense for the year of issue?",
+    choices: ["$4,500", "$1,500", "$3,000", "$6,000"],
+    correctAnswer: "$4,500",
+    explanationJa: "1. 問題のポイント: interest expense for the year は発行日から決算日までの期間で計算します。interest payable は最後の利払日から決算日までです。\n2. 正解理由: $100,000 x 6% x 9/12 = $4,500。発行日 Apr 1 から Dec 31 まで9か月です。\n3. 各選択肢の検討: $4,500 が正解。$1,500 は Oct 1 から Dec 31 の payable 期間。$3,000 は半期分。$6,000 は1年分です。\n4. 試験テクニック: Expense asks issue-to-year-end; payable asks last-payment-to-year-end.\n5. ひっかけポイント: expense を聞かれているのに payable 期間だけで答えること。\n6. 一言まとめ: expense と payable は期間が違います。",
+    keyTakeaway: "Bond interest expense for the issue year runs from issuance date to year-end.",
+    examTechnique: "Interest expense -> issue date to year-end; interest payable -> last interest date to year-end.",
+    trapExplanation: "Candidates often answer the accrued payable period when the question asks annual expense.",
+    relatedTopics: ["Interest payable", "Bonds payable"]
+  }),
+  q({
+    id: "far-q-053",
+    category: "Liabilities",
+    topic: "Sinking fund",
+    concept: "Sinking fund total after investment income and transfers",
+    questionType: "calculation",
+    difficulty: "Medium",
+    question: "A bond sinking fund starts with $50,000 cash. During the year, $30,000 is invested in securities and the fund earns $2,000 of investment income. What is the sinking fund balance, ignoring fair value changes?",
+    choices: ["$52,000", "$20,000", "$22,000", "$30,000"],
+    correctAnswer: "$52,000",
+    explanationJa: "1. 問題のポイント: sinking fund は社債償還用の restricted asset で、現金だけではなく投資も含みます。\n2. 正解理由: 現金を securities に振り替えても fund 全体は減りません。投資収益 $2,000 により $50,000 + $2,000 = $52,000。\n3. 各選択肢の検討: $52,000 が正解。$20,000 は投資に回した cash を fund から消した誤り。$22,000 は残現金に収益だけ足した誤り。$30,000 は投資額だけです。\n4. 試験テクニック: Sinking fund -> restricted asset includes cash plus investments; income increases the fund.\n5. ひっかけポイント: sinking fund = cashだけ と考えること。\n6. 一言まとめ: fund内の現金から投資への振替は fund total を減らしません。",
+    keyTakeaway: "A sinking fund includes restricted cash and investments and increases for investment income.",
+    examTechnique: "Sinking fund balance -> cash + investments + fund earnings, not just remaining cash.",
+    trapExplanation: "Do not treat a purchase of fund investments as a reduction of the sinking fund total.",
+    relatedTopics: ["Restricted cash", "Revenue earned on sinking fund investments"]
+  }),
+  q({
+    id: "far-q-054",
+    category: "Assets",
+    topic: "Long-lived asset impairment",
+    concept: "Two-step held-and-used impairment with fair value trap",
+    questionType: "calculation",
+    difficulty: "Hard",
+    question: "A held-and-used asset has a $900,000 carrying amount, $950,000 undiscounted future cash flows, and $700,000 fair value. What impairment loss is recognized under U.S. GAAP?",
+    choices: ["$0", "$200,000", "$250,000", "$50,000"],
+    correctAnswer: "$0",
+    explanationJa: "1. 問題のポイント: US GAAP の held-and-used long-lived asset impairment は2-stepです。まず carrying amount と undiscounted future cash flows を比較します。\n2. 正解理由: undiscounted CF $950,000 >= carrying amount $900,000 なので recoverable。Step 1を通過するため impairment loss は $0。fair value $700,000 は loss measurement に進んだ場合だけ使います。\n3. 各選択肢の検討: $0 が正解。$200,000 は carrying amount - fair value に飛びついた誤り。$250,000 は undiscounted CF と fair value の差。$50,000 は CF と carrying amount の差を逆に使った誤りです。\n4. 試験テクニック: Held-and-used impairment -> Step 1 uses undiscounted CF; fair value only after failure.\n5. ひっかけポイント: fair value や PV をいきなり book value と比較すること。\n6. 一言まとめ: recoverability test に合格したら、fair value が低くても impairment loss は認識しません。",
+    keyTakeaway: "For held-and-used long-lived assets, no impairment is recognized if undiscounted cash flows recover the carrying amount.",
+    examTechnique: "Carrying <= undiscounted CF -> stop; no impairment even if fair value is lower.",
+    trapExplanation: "Fair value is used only for measurement after the asset fails the recoverability test.",
+    relatedTopics: ["Recoverability test", "Fair value impairment measurement"]
+  }),
+  q({
+    id: "far-q-055",
+    category: "Liabilities",
+    topic: "Bond redemption / extinguishment",
+    concept: "Extinguishment gain with premium and issue costs",
+    questionType: "calculation",
+    difficulty: "Hard",
+    question: "A company reacquires $1,000,000 face amount bonds at 98. The bonds have an unamortized premium of $40,000 and unamortized issue costs of $10,000. What gain or loss is recognized?",
+    choices: ["$50,000 gain", "$20,000 gain", "$30,000 loss", "$60,000 gain"],
+    correctAnswer: "$50,000 gain",
+    explanationJa: "1. 問題のポイント: extinguishment の gain/loss は carrying amount - reacquisition price です。\n2. 正解理由: carrying amount = face $1,000,000 + premium $40,000 - issue costs $10,000 = $1,030,000。reacquisition price = 98% x $1,000,000 = $980,000。$1,030,000 - $980,000 = $50,000 gain。\n3. 各選択肢の検討: $50,000 gain が正解。$20,000 gain は face と98だけの差。$30,000 loss は premium/issue costs の扱い違い。$60,000 gain は issue costs を足してしまった誤りです。\n4. 試験テクニック: Extinguishment -> carrying amount minus reacquisition price; at 98 means 98% of face.\n5. ひっかけポイント: at 98 を $98 と読んだり、issue costs を carrying amount に足すこと。\n6. 一言まとめ: carrying amount > reacquisition price なら gain です。",
+    keyTakeaway: "Extinguishment gain or loss equals carrying amount minus reacquisition price.",
+    examTechnique: "Carrying amount = face + unamortized premium - unamortized discount - unamortized issue costs.",
+    trapExplanation: "Do not ignore unamortized issue costs or misread at 98 as a dollar amount.",
+    relatedTopics: ["Gain on extinguishment of debt", "Outstanding bonds"]
+  }),
+  q({
+    id: "far-q-056",
+    category: "Equity",
+    topic: "Basic EPS / cumulative preferred stock",
+    concept: "Current-year preferred dividend requirement",
+    questionType: "calculation",
+    difficulty: "Hard",
+    question: "Net income is $500,000. Cumulative preferred stock has a current-year dividend requirement of $60,000, but only $20,000 was paid; prior-year dividends in arrears are $30,000. Weighted-average common shares are 110,000. What is basic EPS?",
+    choices: ["$4.00", "$4.36", "$3.73", "$4.09"],
+    correctAnswer: "$4.00",
+    explanationJa: "1. 問題のポイント: cumulative preferred stock の Basic EPS では、実際支払額ではなく当期分の優先配当 requirement を控除します。\n2. 正解理由: (Net income $500,000 - current-year preferred dividends $60,000) / 110,000 = $4.00。prior-year dividends in arrears は過年度分なので当期EPSでは追加控除しません。\n3. 各選択肢の検討: $4.00 が正解。$4.36 は支払額$20,000だけを控除。$3.73 は過年度arrearsも控除。$4.09 は控除額の取り違えです。\n4. 試験テクニック: Cumulative preferred stock -> deduct current-year dividend requirement, not cash paid.\n5. ひっかけポイント: 実際に支払ったpreferred dividendsやarrearsをそのまま使うこと。\n6. 一言まとめ: cumulative preferred は当期分 requirement を控除します。",
+    keyTakeaway: "For cumulative preferred stock, basic EPS deducts the current-year preferred dividend requirement.",
+    examTechnique: "Cumulative preferred stock -> deduct current year requirement; ignore prior-year arrears for current EPS.",
+    trapExplanation: "Paid dividends and prior-year arrears are tempting but do not determine current-year basic EPS numerator.",
+    relatedTopics: ["Basic EPS", "Dividends in arrears"]
+  }),
+  q({
+    id: "far-q-057",
+    category: "Assets",
+    topic: "Factoring of accounts receivable",
+    concept: "Cash received in factoring with holdback and recourse",
+    questionType: "calculation",
+    difficulty: "Hard",
+    question: "Receivables with a $200,000 face amount are factored with control surrendered. The factor charges a $4,000 fee, holds back $20,000, charges $2,000 interest, and the seller estimates a $6,000 recourse obligation. What cash is received at transfer?",
+    choices: ["$174,000", "$168,000", "$176,000", "$180,000"],
+    correctAnswer: "$174,000",
+    explanationJa: "1. 問題のポイント: control surrendered なら sale treatment。cash received は face amount から fee、holdback、interest を差し引いて計算します。\n2. 正解理由: $200,000 - $4,000 - $20,000 - $2,000 = $174,000。recourse obligation $6,000 は cash received ではなく gain/loss 計算で扱います。\n3. 各選択肢の検討: $174,000 が正解。$168,000 は recourse obligation を現金から差し引いた誤り。$176,000 は interest を無視。$180,000 は fee/interest を無視しています。\n4. 試験テクニック: Cash received in factoring -> ignore recourse obligation; subtract fee, holdback, interest.\n5. ひっかけポイント: recourse obligation を cash から差し引くこと。holdback を費用と考えること。\n6. 一言まとめ: holdback は due from factor、recourse は gain/loss 側です。",
+    keyTakeaway: "Factoring cash received excludes the recourse obligation and subtracts fee, holdback, and interest.",
+    examTechnique: "Cash received question -> ignore recourse obligation; holdback is due from factor.",
+    trapExplanation: "Recourse affects gain or loss, not the cash received at transfer.",
+    relatedTopics: ["With recourse", "Holdback", "Cash received in factoring"]
+  }),
+  q({
+    id: "far-q-058",
+    category: "Liabilities",
+    topic: "Bonds with detachable warrants",
+    concept: "Incremental method allocation when only warrant FV is known",
+    questionType: "calculation",
+    difficulty: "Hard",
+    question: "Bonds with a $1,000,000 face amount and detachable warrants are issued for $980,000. Only the warrants have a known fair value of $60,000. Under the incremental method, what bond discount is recorded?",
+    choices: ["$80,000", "$60,000", "$20,000", "$40,000"],
+    correctAnswer: "$80,000",
+    explanationJa: "1. 問題のポイント: detachable warrants 付き社債で片方だけ market value が分かる場合は incremental method です。\n2. 正解理由: known warrant FV $60,000 を APIC-warrants に配分。残り proceeds は bond に $920,000 ($980,000 - $60,000)。face $1,000,000 - carrying $920,000 = discount $80,000。\n3. 各選択肢の検討: $80,000 が正解。$60,000 は warrant FV そのもの。$20,000 は proceeds と face の差だけ。$40,000 は配分の取り違えです。\n4. 試験テクニック: Only one security has known FMV -> Incremental Method.\n5. ひっかけポイント: warrants論点に引っ張られてAPICだけを選び、bond discountまで計算しないこと。\n6. 一言まとめ: known FV を先に配分し、残額を bond に置きます。",
+    keyTakeaway: "When only one component has known fair value, use the incremental method and allocate the residual to the other component.",
+    examTechnique: "Only one security has known FMV -> Incremental Method; face minus bond allocation = discount/premium.",
+    trapExplanation: "Do not stop at APIC-warrants; calculate the bond carrying amount and discount.",
+    relatedTopics: ["Incremental method", "Bond discount", "APIC warrants"]
+  }),
+  q({
+    id: "far-q-059",
+    category: "Revenue Recognition",
+    topic: "Percentage-of-completion method",
+    concept: "Current gross profit using percent complete",
+    questionType: "calculation",
+    difficulty: "Medium",
+    question: "A long-term contract has a $1,000,000 price and $800,000 estimated total cost. Costs incurred to date are $300,000, with no prior-year profit recognized. Under percentage-of-completion, what current gross profit is recognized?",
+    choices: ["$75,000", "$200,000", "$300,000", "$0"],
+    correctAnswer: "$75,000",
+    explanationJa: "1. 問題のポイント: profitable contract の current gross profit は percentage completed x estimated total gross profit です。\n2. 正解理由: percentage complete = $300,000 / $800,000 = 37.5%。estimated total gross profit = $1,000,000 - $800,000 = $200,000。current gross profit = 37.5% x $200,000 = $75,000。\n3. 各選択肢の検討: $75,000 が正解。$200,000 は総利益全額。$300,000 はcosts incurred。$0 は loss contract と混同しています。\n4. 試験テクニック: POC profit -> percent complete times total estimated gross profit; ignore billings/collections.\n5. ひっかけポイント: billings や cash collections を利益計算に使うこと。\n6. 一言まとめ: profit contract は進捗率 x 総見積利益です。loss contractなら expected total loss を即時全額認識します。",
+    keyTakeaway: "Under percentage-of-completion for a profitable contract, gross profit equals percent complete times estimated total gross profit.",
+    examTechnique: "Profit contract -> % complete x total gross profit; expected loss contract -> recognize full loss immediately.",
+    trapExplanation: "Billings and collections affect receivables/cash, not the gross profit calculation.",
+    relatedTopics: ["Expected contract loss recognition", "Long-term contracts"]
+  }),
+  q({
+    id: "far-q-060",
+    category: "Liabilities",
+    topic: "Escrow liability",
+    concept: "Escrow liability rollforward with service fee",
+    questionType: "calculation",
+    difficulty: "Medium",
+    question: "Beginning escrow liability is $10,000. The company receives $50,000 from customers, pays $42,000 of customer taxes, and credits customers with $800 interest less a $200 service fee. What is ending escrow liability?",
+    choices: ["$18,600", "$18,800", "$19,000", "$60,000"],
+    correctAnswer: "$18,600",
+    explanationJa: "1. 問題のポイント: escrow payments received は会社のお金ではなく預り金なので liability を増やします。顧客のための taxes 支払は liability を減らします。\n2. 正解理由: beginning $10,000 + receipts $50,000 - taxes paid $42,000 + net interest credited to customers ($800 - $200) = $18,600。service fee $200 は会社収益であり escrow liability には含めません。\n3. 各選択肢の検討: $18,600 が正解。$18,800 は service fee を控除していません。$19,000 は interestを全額加えた誤り。$60,000 は支払や利息調整を無視しています。\n4. 試験テクニック: Escrow liability -> add customer receipts and net customer credits; subtract payments made for customers.\n5. ひっかけポイント: payments received を asset だけで考え liability に足さないこと。service fee をcustomer creditに含めること。\n6. 一言まとめ: customerに帰属する分だけ escrow liability です。",
+    keyTakeaway: "Escrow liability increases for customer receipts and net credits owed to customers, and decreases for payments made on their behalf.",
+    examTechnique: "Escrow rollforward -> beginning + receipts - customer payments + interest credited net of service fee.",
+    trapExplanation: "The service fee is company revenue, not an amount owed back to customers.",
+    relatedTopics: ["Escrow liabilities", "Customer escrow accounting"]
+  }),
+  q({
+    id: "far-q-061",
+    category: "Present Value",
+    topic: "Ordinary annuity / single-sum PV",
+    concept: "Selecting PV factors for recurring payments and one-time amounts",
+    questionType: "calculation",
+    difficulty: "Medium",
+    question: "A lease requires five equal annual payments of $10,000 plus a $20,000 purchase option payable only at the end of year 5. Which present value factors should be used?",
+    choices: ["Ordinary annuity factor for the five payments and single-sum PV factor for the option", "Single-sum PV factor for all payments", "Ordinary annuity factor for the option only", "No discounting because the amounts are fixed"],
+    correctAnswer: "Ordinary annuity factor for the five payments and single-sum PV factor for the option",
+    explanationJa: "1. 問題のポイント: 複数回の均等支払は ordinary annuity factor、purchase option や residual value のような1回払いは single-sum PV factor を使います。\n2. 正解理由: annual payments は5回の均等支払なので ordinary annuity。purchase option は year 5 の一回払いなので single-sum で割引きます。\n3. 各選択肢の検討: annuity + single-sum が正解。全て single-sum は均等支払の扱い誤り。option に annuity factor は誤り。固定額でも現在価値計算は必要です。\n4. 試験テクニック: Repeating equal payments -> annuity; one-time future payment -> single-sum.\n5. ひっかけポイント: payment after X years を annuity として扱うこと。\n6. 一言まとめ: 回数が複数で均等ならannuity、1回だけならsingle-sumです。",
+    keyTakeaway: "Use an ordinary annuity factor for equal recurring payments and a single-sum factor for one-time future payments.",
+    examTechnique: "Annual lease payments -> ordinary annuity; purchase option/residual/balloon -> single-sum PV.",
+    trapExplanation: "A payment after a specified number of years is a single future amount, not an annuity.",
+    relatedTopics: ["Lease liability measurement", "Single-sum PV", "Ordinary annuity"]
   })
 ];

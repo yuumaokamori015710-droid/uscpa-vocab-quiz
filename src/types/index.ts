@@ -10,6 +10,8 @@ export type ThemeMode = "dark" | "light";
 
 export type QuestionDifficulty = "Easy" | "Medium" | "Hard";
 
+export type QuestionType = "calculation" | "theory";
+
 export type Word = {
   id: string;
   term: string;
@@ -30,6 +32,7 @@ export type Question = {
   category: string;
   topic: string;
   concept?: string;
+  questionType?: QuestionType;
   difficulty: QuestionDifficulty;
   question: string;
   choices: string[];

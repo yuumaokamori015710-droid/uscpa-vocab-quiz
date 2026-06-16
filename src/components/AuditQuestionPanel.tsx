@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useLearningStore } from "@/store/useLearningStore";
-import type { Question, QuestionDifficulty, Subject } from "@/types";
+import type { Question, QuestionDifficulty, QuestionType, Subject } from "@/types";
 
 type AuditQuestionPanelProps = {
   questions: Question[];
@@ -11,6 +11,7 @@ type AuditQuestionPanelProps = {
 type Mode = "setup" | "quiz" | "result";
 
 const difficulties: Array<QuestionDifficulty | "All"> = ["All", "Easy", "Medium", "Hard"];
+const questionTypes: Array<QuestionType | "All"> = ["All", "calculation", "theory"];
 const practiceSubjects: Subject[] = ["FAR", "AUD"];
 
 const shuffle = <T,>(items: T[]) => [...items].sort(() => Math.random() - 0.5);
@@ -21,6 +22,7 @@ export function AuditQuestionPanel({ questions }: AuditQuestionPanelProps) {
   const [category, setCategory] = useState("All");
   const [topic, setTopic] = useState("All");
   const [difficulty, setDifficulty] = useState<QuestionDifficulty | "All">("All");
+  const [questionType, setQuestionType] = useState<QuestionType | "All">("All");
   const [quizQuestions, setQuizQuestions] = useState<Question[]>([]);
   const [index, setIndex] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
@@ -69,10 +71,11 @@ export function AuditQuestionPanel({ questions }: AuditQuestionPanelProps) {
       return (
         (category === "All" || question.category === category) &&
         (topic === "All" || question.topic === topic) &&
-        (difficulty === "All" || question.difficulty === difficulty)
+        (difficulty === "All" || question.difficulty === difficulty) &&
+        (questionType === "All" || (question.questionType ?? "theory") === questionType)
       );
     });
-  }, [category, difficulty, subjectQuestions, topic]);
+  }, [category, difficulty, questionType, subjectQuestions, topic]);
 
   const current = quizQuestions[index];
   const isAnswered = selected !== null;
@@ -134,6 +137,7 @@ export function AuditQuestionPanel({ questions }: AuditQuestionPanelProps) {
                   setSubject(nextSubject);
                   setCategory("All");
                   setTopic("All");
+                  setQuestionType("All");
                 }}
                 className={`rounded-lg border p-4 text-left transition ${
                   subject === nextSubject
@@ -150,10 +154,11 @@ export function AuditQuestionPanel({ questions }: AuditQuestionPanelProps) {
             ))}
           </div>
 
-          <div className="mt-5 grid gap-3 md:grid-cols-3">
+          <div className="mt-5 grid gap-3 md:grid-cols-4">
             <FilterSelect label="Category" value={category} values={categories} onChange={(value) => { setCategory(value); setTopic("All"); }} />
             <FilterSelect label="Topic" value={topic} values={topics} onChange={setTopic} />
             <FilterSelect label="Difficulty" value={difficulty} values={difficulties} onChange={(value) => setDifficulty(value as QuestionDifficulty | "All")} />
+            <FilterSelect label="Type" value={questionType} values={questionTypes} onChange={(value) => setQuestionType(value as QuestionType | "All")} />
           </div>
 
           <div className="mt-5 grid gap-3 md:grid-cols-[1fr_auto_auto] md:items-center">
@@ -187,6 +192,7 @@ export function AuditQuestionPanel({ questions }: AuditQuestionPanelProps) {
                 <Badge>{current.subject}</Badge>
                 <Badge>{current.topic}</Badge>
                 <Badge>{current.difficulty}</Badge>
+                <Badge>{current.questionType === "calculation" ? "Calculation" : "Theory"}</Badge>
               </div>
               <p className="text-sm text-[var(--muted)]">{index + 1} / {quizQuestions.length}</p>
             </div>
