@@ -15,6 +15,41 @@ const questionTypes: Array<QuestionType | "All"> = ["All", "calculation", "theor
 const practiceSubjects: Subject[] = ["FAR", "AUD"];
 
 const shuffle = <T,>(items: T[]) => [...items].sort(() => Math.random() - 0.5);
+const getQuestionType = (question: Question): QuestionType => question.questionType ?? "theory";
+const getQuestionTypeLabel = (type: QuestionType | "All") => {
+  if (type === "calculation") return "計算問題";
+  if (type === "theory") return "理論問題";
+  return "すべて";
+};
+const topicPointJa: Record<string, string> = {
+  "Depreciation / Salvage Value": "残存価額がある減価償却では、取得原価そのものではなく「取得原価から残存価額を引いた金額」だけを償却する、という問題です。",
+  "Moving-average inventory / Perpetual system": "継続記録法の移動平均では、仕入のたびに平均単価を更新し、その更新後の単価で売上原価を計算する問題です。",
+  "Operating lease liability": "オペレーティングリースでも借手はリース負債を認識し、支払後は残りの支払額を現在価値に直す、という問題です。",
+  "Current liabilities": "負債の名前ではなく、1年以内または営業循環期間内に決済されるかで流動負債かどうかを判断する問題です。",
+  "Discontinued operations": "廃止事業として表示するには、単なる一部売却ではなく、事業や財務結果に大きな影響を与える戦略転換が必要かを見抜く問題です。",
+  "Bonds interest expense period": "社債利息費用は発行日から決算日まで、未払利息は最後の利払日から決算日まで、という期間の違いを問う問題です。",
+  "Sinking fund": "社債償還用の積立基金は現金だけでなく投資も含む制限付き資産で、投資収益により増えるという問題です。",
+  "Long-lived asset impairment": "使用中の長期性資産は、まず割引前将来キャッシュフローで回収可能かを判定し、いきなり公正価値と比較しない問題です。",
+  "Bond redemption / extinguishment": "社債の償還損益は、帳簿価額と買戻価格の差で判断する問題です。プレミアム・ディスカウント・発行費用の未償却残高を入れます。",
+  "Basic EPS / cumulative preferred stock": "累積型優先株がある場合、Basic EPSでは実際支払額ではなく当期分の優先配当を控除する問題です。",
+  "Factoring of accounts receivable": "売掛金をファクタリングしたとき、現金収入の計算では手数料・留保額・利息を差し引き、償還義務は現金計算に入れない問題です。",
+  "Bonds with detachable warrants": "分離可能な新株予約権付き社債で片方だけ公正価値が分かる場合、分かる方を先に配分し、残りを社債に配分する問題です。",
+  "Percentage-of-completion method": "工事進行基準では、進捗率に見積総利益を掛けて当期利益を出し、請求額や入金額に引っ張られない問題です。",
+  "Escrow liability": "顧客から預かったエスクロー資金は会社の収益ではなく負債で、顧客のための支払や利息控除後の増減を追う問題です。",
+  "Ordinary annuity / single-sum PV": "毎年の均等支払は年金現価係数、将来1回だけの支払は単一金額の現価係数を使い分ける問題です。",
+  "Prior service cost": "年金制度の変更で過去勤務分の給付が増えたとき、最初にその他包括利益へ認識し、その後費用化していく論点です。"
+};
+const getQuestionPoint = (question: Question) => {
+  if (topicPointJa[question.topic]) return topicPointJa[question.topic];
+  const sectionMatch = question.explanationJa.match(/1\.\s*問題のポイント:\s*([^\n]+)/);
+  if (sectionMatch?.[1] && !/[A-Za-z]{4,}.*を識別する問題/.test(sectionMatch[1])) return sectionMatch[1].trim();
+  const firstSentence = question.explanationJa.split("。")[0]?.trim();
+  if (firstSentence && !/[A-Za-z]{4,}.*を識別する問題/.test(firstSentence)) return `${firstSentence}。`;
+  if (getQuestionType(question) === "calculation") {
+    return `この問題は「${question.topic}」の計算問題です。与えられた数値のうち、使うものと無視するものを切り分けるのがポイントです。`;
+  }
+  return `この問題は「${question.topic}」の理論問題です。用語の名前ではなく、要件・判断基準・結論のつながりを押さえるのがポイントです。`;
+};
 
 export function AuditQuestionPanel({ questions }: AuditQuestionPanelProps) {
   const [mode, setMode] = useState<Mode>("setup");
@@ -72,16 +107,29 @@ export function AuditQuestionPanel({ questions }: AuditQuestionPanelProps) {
         (category === "All" || question.category === category) &&
         (topic === "All" || question.topic === topic) &&
         (difficulty === "All" || question.difficulty === difficulty) &&
-        (questionType === "All" || (question.questionType ?? "theory") === questionType)
+        (questionType === "All" || getQuestionType(question) === questionType)
       );
     });
   }, [category, difficulty, questionType, subjectQuestions, topic]);
+
+  const typeCounts = useMemo(() => {
+    return subjectQuestions.reduce<Record<QuestionType | "All", number>>(
+      (acc, question) => {
+        acc.All += 1;
+        acc[getQuestionType(question)] += 1;
+        return acc;
+      },
+      { All: 0, calculation: 0, theory: 0 }
+    );
+  }, [subjectQuestions]);
 
   const current = quizQuestions[index];
   const isAnswered = selected !== null;
   const isCorrect = selected === current?.correctAnswer;
   const isLast = index >= quizQuestions.length - 1;
   const reviewCount = activeReviewIds.size;
+  const filteredReviewCount = filteredQuestions.filter((question) => activeReviewIds.has(question.id)).length;
+  const questionPoint = current ? getQuestionPoint(current) : "";
 
   const startQuiz = (useReviewOnly: boolean) => {
     const source = filteredQuestions.filter((question) => !useReviewOnly || activeReviewIds.has(question.id));
@@ -154,11 +202,27 @@ export function AuditQuestionPanel({ questions }: AuditQuestionPanelProps) {
             ))}
           </div>
 
-          <div className="mt-5 grid gap-3 md:grid-cols-4">
+          <div className="mt-5 grid gap-2 sm:grid-cols-3">
+            {questionTypes.map((type) => (
+              <button
+                key={type}
+                onClick={() => setQuestionType(type)}
+                className={`rounded-lg border p-3 text-left transition ${
+                  questionType === type
+                    ? "border-[var(--accent)] bg-[var(--accent-soft)]"
+                    : "border-[var(--border)] bg-[var(--surface)] hover:border-[var(--accent)] hover:bg-[var(--hover)]"
+                }`}
+              >
+                <span className="block text-sm font-semibold text-[var(--text)]">{getQuestionTypeLabel(type)}</span>
+                <span className="mt-1 block text-xs text-[var(--muted)]">{typeCounts[type]}問</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="mt-5 grid gap-3 md:grid-cols-3">
             <FilterSelect label="Category" value={category} values={categories} onChange={(value) => { setCategory(value); setTopic("All"); }} />
             <FilterSelect label="Topic" value={topic} values={topics} onChange={setTopic} />
             <FilterSelect label="Difficulty" value={difficulty} values={difficulties} onChange={(value) => setDifficulty(value as QuestionDifficulty | "All")} />
-            <FilterSelect label="Type" value={questionType} values={questionTypes} onChange={(value) => setQuestionType(value as QuestionType | "All")} />
           </div>
 
           <div className="mt-5 grid gap-3 md:grid-cols-[1fr_auto_auto] md:items-center">
@@ -174,11 +238,14 @@ export function AuditQuestionPanel({ questions }: AuditQuestionPanelProps) {
             </button>
             <button
               onClick={() => startQuiz(true)}
-              disabled={reviewCount === 0}
+              disabled={filteredReviewCount === 0}
               className="h-11 rounded-md border border-[var(--border)] px-5 text-sm font-semibold text-[var(--text)] hover:bg-[var(--hover)] disabled:cursor-not-allowed disabled:opacity-45"
             >
-              復習だけ解く
+              間違えた問題だけ解く
             </button>
+            <p className="md:col-span-3 text-xs leading-5 text-[var(--muted)]">
+              不正解だった問題は自動で復習リストに保存されます。現在の条件で復習できる問題は {filteredReviewCount}問です。
+            </p>
           </div>
         </>
       ) : null}
@@ -192,7 +259,7 @@ export function AuditQuestionPanel({ questions }: AuditQuestionPanelProps) {
                 <Badge>{current.subject}</Badge>
                 <Badge>{current.topic}</Badge>
                 <Badge>{current.difficulty}</Badge>
-                <Badge>{current.questionType === "calculation" ? "Calculation" : "Theory"}</Badge>
+                <Badge>{getQuestionTypeLabel(getQuestionType(current))}</Badge>
               </div>
               <p className="text-sm text-[var(--muted)]">{index + 1} / {quizQuestions.length}</p>
             </div>
@@ -223,21 +290,27 @@ export function AuditQuestionPanel({ questions }: AuditQuestionPanelProps) {
 
             {isAnswered ? (
               <div className={`mt-5 rounded-lg border p-4 ${isCorrect ? "border-[var(--correct)]/70 bg-[var(--correct)]/14" : "border-[var(--wrong)]/70 bg-[var(--wrong)]/14"}`}>
-                <p className="text-lg font-semibold text-[var(--text)]">{isCorrect ? "Correct" : "Wrong"}</p>
+                <p className="text-lg font-semibold text-[var(--text)]">{isCorrect ? "正解" : "不正解"}</p>
+                {!isCorrect ? (
+                  <p className="mt-2 text-sm leading-6 text-[var(--muted)]">この問題は復習リストに保存しました。あとで「間違えた問題だけ解く」から解き直せます。</p>
+                ) : null}
                 <div className="mt-3 rounded-md bg-[var(--card)] p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--accent)]">試験のポイント</p>
-                  <p className="mt-2 text-sm font-semibold leading-6 text-[var(--text)]">{current.examTechnique ?? current.keyTakeaway}</p>
-                  {current.examTechnique && current.examTechnique !== current.keyTakeaway ? (
-                    <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{current.keyTakeaway}</p>
-                  ) : null}
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--accent)]">問題のポイント</p>
+                  <p className="mt-2 text-sm font-semibold leading-6 text-[var(--text)]">{questionPoint}</p>
                 </div>
                 <details className="mt-3 rounded-md border border-[var(--border)] bg-[var(--card)] p-4">
                   <summary className="cursor-pointer text-sm font-semibold text-[var(--text)]">詳細解説を開く</summary>
                   <div className="mt-4 space-y-4 text-sm leading-6 text-[var(--muted)]">
                     <section>
-                      <p className="font-semibold text-[var(--text)]">解説</p>
+                      <p className="font-semibold text-[var(--text)]">日本語解説</p>
                       <p className="mt-1 whitespace-pre-line">{current.explanationJa}</p>
                     </section>
+                    {current.examTechnique ? (
+                      <section>
+                        <p className="font-semibold text-[var(--text)]">試験での見抜き方</p>
+                        <p className="mt-1">{current.examTechnique}</p>
+                      </section>
+                    ) : null}
                     <section>
                       <p className="font-semibold text-[var(--text)]">選択肢の見方</p>
                       <ul className="mt-1 space-y-1">
