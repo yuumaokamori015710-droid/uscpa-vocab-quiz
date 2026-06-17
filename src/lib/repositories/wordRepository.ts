@@ -1,3 +1,4 @@
+import { additionalUscpaWords } from "@/data/additionalUscpaWords";
 import { uscpaWords } from "@/data/uscpaWords";
 import type { Subject, Word } from "@/types";
 
@@ -8,18 +9,30 @@ export interface WordRepository {
 }
 
 export class LocalWordRepository implements WordRepository {
+  private readonly words = mergeWords(uscpaWords, additionalUscpaWords);
+
   async findAll() {
-    return uscpaWords;
+    return this.words;
   }
 
   async findBySubject(subject: Subject) {
-    return uscpaWords.filter((word) => word.subject === subject);
+    return this.words.filter((word) => word.subject === subject);
   }
 
   async findByIds(ids: string[]) {
     const idSet = new Set(ids);
-    return uscpaWords.filter((word) => idSet.has(word.id));
+    return this.words.filter((word) => idSet.has(word.id));
   }
 }
 
 export const wordRepository: WordRepository = new LocalWordRepository();
+
+function mergeWords(...wordGroups: Word[][]) {
+  const seen = new Set<string>();
+  return wordGroups.flat().filter((word) => {
+    const key = `${word.subject}:${word.term.trim().toLowerCase()}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}

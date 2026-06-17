@@ -86,7 +86,7 @@ export default function Home() {
     <AppShell activeView={activeView} onNavigate={(next) => setView(next)}>
       {view === "quizHome" ? (
         <>
-          <SubjectPicker onStart={startSubjectQuiz} />
+          <SubjectPicker counts={deckCounts} onStart={startSubjectQuiz} />
 
           <AuditQuestionPanel questions={questions} />
 

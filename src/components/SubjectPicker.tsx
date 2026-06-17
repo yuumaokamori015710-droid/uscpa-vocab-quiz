@@ -8,17 +8,18 @@ const subjects: Array<{ id: Subject; title: string; description: string }> = [
 ];
 
 type SubjectPickerProps = {
+  counts: Record<Subject, number>;
   onStart: (subject: Subject) => void;
 };
 
-export function SubjectPicker({ onStart }: SubjectPickerProps) {
+export function SubjectPicker({ counts, onStart }: SubjectPickerProps) {
   return (
     <section className="mt-8 rounded-lg border border-[var(--border)] bg-[var(--card)] p-5">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--accent)]">Start Quiz</p>
           <h2 className="mt-2 text-2xl font-semibold text-[var(--text)]">クイズを開始</h2>
-          <p className="mt-2 text-sm text-[var(--muted)]">科目を選ぶと、20語のデッキから4択クイズを開始します。</p>
+          <p className="mt-2 text-sm text-[var(--muted)]">科目を選ぶと、登録済みの単語デッキから4択クイズを開始します。</p>
         </div>
       </div>
       <div className="mt-4 grid gap-3 md:grid-cols-4">
@@ -29,6 +30,7 @@ export function SubjectPicker({ onStart }: SubjectPickerProps) {
             className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5 text-left transition hover:-translate-y-0.5 hover:border-[var(--accent)] hover:bg-[var(--hover)]"
           >
             <span className="text-2xl font-semibold text-[var(--accent)]">{subject.title}</span>
+            <span className="ml-3 text-sm font-semibold text-[var(--muted)]">{counts[subject.id] ?? 0}語</span>
             <span className="mt-4 block text-sm leading-6 text-[var(--muted)]">{subject.description}</span>
           </button>
         ))}
