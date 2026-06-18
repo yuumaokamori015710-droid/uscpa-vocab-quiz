@@ -25,14 +25,14 @@ export function WeakWordsPanel({ words, onReview }: WeakWordsPanelProps) {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2 className="text-xl font-semibold text-[var(--text)]">Weak Words</h2>
-          <p className="mt-2 text-sm text-[var(--muted)]">不正解だった単語を自動保存しています。</p>
+          <p className="mt-2 text-sm text-[var(--muted)]">不正解だった単語を自動保存しています。Mastered以外の単語だけをまとめて解き直せます。</p>
         </div>
         <button
           onClick={() => onReview(reviewWords)}
           disabled={reviewWords.length === 0}
           className="h-11 rounded-md bg-[var(--accent)] px-5 text-sm font-semibold text-[var(--background)] disabled:cursor-not-allowed disabled:opacity-45"
         >
-          苦手単語だけ再挑戦
+          間違えた単語だけ解く（{reviewWords.length}語）
         </button>
       </div>
 
@@ -47,7 +47,7 @@ export function WeakWordsPanel({ words, onReview }: WeakWordsPanelProps) {
                   <div className="flex flex-wrap items-center gap-3">
                     <p className="text-lg font-semibold text-[var(--text)]">{word.term}</p>
                     <span className="rounded-md border border-[var(--border)] px-2 py-1 text-xs font-semibold text-[var(--accent)]">{word.subject}</span>
-                    <span className="text-xs text-[var(--muted)]">Mistakes {weakWord.mistakes}</span>
+                    <span className="text-xs text-[var(--muted)]">過去ミス {weakWord.mistakes}回</span>
                   </div>
                   <p className="mt-2 text-sm text-[var(--subtle)]">{word.meaning}</p>
                   <p className="mt-1 text-sm leading-6 text-[var(--muted)]">{word.explanation}</p>

@@ -13,7 +13,10 @@ type QuizPanelProps = {
 };
 
 export function QuizPanel({ subject, words, allWords, onFinish, onCancel }: QuizPanelProps) {
-  const { recordAnswer, finishSession } = useLearningStore();
+  const recordAnswer = useLearningStore((state) => state.recordAnswer);
+  const finishSession = useLearningStore((state) => state.finishSession);
+  const answers = useLearningStore((state) => state.answers);
+  const weakWords = useLearningStore((state) => state.weakWords);
   const quiz = useQuiz(words, allWords);
 
   if (!quiz.question) {
@@ -28,6 +31,8 @@ export function QuizPanel({ subject, words, allWords, onFinish, onCancel }: Quiz
   }
 
   const progress = `${quiz.index + 1} / ${words.length}`;
+  const currentAttempts = answers.filter((answer) => answer.wordId === quiz.question.id).length;
+  const currentMistakes = weakWords[quiz.question.id]?.mistakes ?? 0;
 
   const handleChoice = (meaning: string) => {
     if (quiz.isAnswered) return;
@@ -48,7 +53,13 @@ export function QuizPanel({ subject, words, allWords, onFinish, onCancel }: Quiz
     <section className="mt-8 grid gap-6 lg:grid-cols-[1fr_22rem]">
       <div className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-5 sm:p-8">
         <div className="flex items-center justify-between gap-4">
-          <span className="rounded-md border border-[var(--accent)]/35 px-3 py-1 text-sm font-semibold text-[var(--accent)]">{subject}</span>
+          <div className="flex flex-wrap gap-2">
+            <span className="rounded-md border border-[var(--accent)]/35 px-3 py-1 text-sm font-semibold text-[var(--accent)]">{subject}</span>
+            <span className="rounded-md border border-[var(--border)] px-3 py-1 text-xs font-semibold text-[var(--muted)]">
+              {currentAttempts > 0 ? `解答履歴 ${currentAttempts}回` : "初回"}
+            </span>
+            <span className="rounded-md border border-[var(--border)] px-3 py-1 text-xs font-semibold text-[var(--muted)]">過去ミス {currentMistakes}回</span>
+          </div>
           <span className="text-sm text-[var(--muted)]">{progress}</span>
         </div>
 
@@ -85,7 +96,8 @@ export function QuizPanel({ subject, words, allWords, onFinish, onCancel }: Quiz
 
         {quiz.isAnswered ? (
           <div className={`mt-6 rounded-lg border p-4 ${quiz.isCorrect ? "border-[#2E7D5B]/70 bg-[#2E7D5B]/14" : "border-[#8A2D2D]/70 bg-[#8A2D2D]/14"}`}>
-            <p className="text-lg font-semibold text-[var(--text)]">{quiz.isCorrect ? "Correct" : "Wrong"}</p>
+            <p className="text-lg font-semibold text-[var(--text)]">{quiz.isCorrect ? "正解" : "不正解"}</p>
+            {!quiz.isCorrect ? <p className="mt-2 text-sm leading-6 text-[var(--subtle)]">この単語は苦手単語に保存しました。Weak Wordsからもう一度解けます。</p> : null}
             <p className="mt-2 text-sm leading-6 text-[var(--subtle)]">{quiz.question.explanation}</p>
           </div>
         ) : null}
@@ -96,7 +108,10 @@ export function QuizPanel({ subject, words, allWords, onFinish, onCancel }: Quiz
         <div className="mt-5 h-2 overflow-hidden rounded-full bg-[var(--surface)]">
           <div className="h-full bg-[var(--accent)]" style={{ width: `${((quiz.index + 1) / words.length) * 100}%` }} />
         </div>
-        <p className="mt-4 text-sm text-[var(--muted)]">正誤を確認してから次の問題へ進みます。</p>
+        <div className="mt-4 rounded-lg bg-[var(--surface)] p-3 text-sm leading-6 text-[var(--muted)]">
+          <p>毎回ランダムな順番で出題します。</p>
+          <p>不正解の単語はWeak Wordsに保存されます。</p>
+        </div>
         <button
           onClick={handleNext}
           disabled={!quiz.isAnswered}

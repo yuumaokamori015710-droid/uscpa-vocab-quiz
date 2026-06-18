@@ -20,6 +20,8 @@ import type { Friend, Question, Subject, Word } from "@/types";
 
 type View = AppView | "quiz" | "result";
 
+const shuffle = <T,>(items: T[]) => [...items].sort(() => Math.random() - 0.5);
+
 export default function Home() {
   const [view, setView] = useState<View>("quizHome");
   const [words, setWords] = useState<Word[]>([]);
@@ -61,14 +63,14 @@ export default function Home() {
     const subjectWords = await wordRepository.findBySubject(subject);
     resetSession();
     setQuizSubject(subject);
-    setQuizWords(subjectWords);
+    setQuizWords(shuffle(subjectWords));
     setView("quiz");
   };
 
   const startWeakQuiz = (reviewWords: Word[]) => {
     resetSession();
     setQuizSubject("Weak");
-    setQuizWords(reviewWords);
+    setQuizWords(shuffle(reviewWords));
     setView("quiz");
   };
 

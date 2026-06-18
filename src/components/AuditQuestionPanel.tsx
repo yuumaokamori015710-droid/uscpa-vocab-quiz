@@ -64,6 +64,7 @@ export function AuditQuestionPanel({ questions }: AuditQuestionPanelProps) {
   const [reviewOnly, setReviewOnly] = useState(false);
 
   const getQuestionStats = useLearningStore((state) => state.getQuestionStats);
+  const questionAnswers = useLearningStore((state) => state.questionAnswers);
   const reviewQuestions = useLearningStore((state) => state.reviewQuestions);
   const recordQuestionAnswer = useLearningStore((state) => state.recordQuestionAnswer);
   const resetQuestionSession = useLearningStore((state) => state.resetQuestionSession);
@@ -130,6 +131,8 @@ export function AuditQuestionPanel({ questions }: AuditQuestionPanelProps) {
   const reviewCount = activeReviewIds.size;
   const filteredReviewCount = filteredQuestions.filter((question) => activeReviewIds.has(question.id)).length;
   const questionPoint = current ? getQuestionPoint(current) : "";
+  const currentAttempts = current ? questionAnswers.filter((answer) => answer.questionId === current.id).length : 0;
+  const currentMistakes = current ? reviewQuestions[current.id]?.mistakes ?? 0 : 0;
 
   const startQuiz = (useReviewOnly: boolean) => {
     const source = filteredQuestions.filter((question) => !useReviewOnly || activeReviewIds.has(question.id));
@@ -241,7 +244,7 @@ export function AuditQuestionPanel({ questions }: AuditQuestionPanelProps) {
               disabled={filteredReviewCount === 0}
               className="h-11 rounded-md border border-[var(--border)] px-5 text-sm font-semibold text-[var(--text)] hover:bg-[var(--hover)] disabled:cursor-not-allowed disabled:opacity-45"
             >
-              間違えた問題だけ解く
+              間違えた問題だけ解く（{filteredReviewCount}問）
             </button>
             <p className="md:col-span-3 text-xs leading-5 text-[var(--muted)]">
               不正解だった問題は自動で復習リストに保存されます。現在の条件で復習できる問題は {filteredReviewCount}問です。
@@ -260,6 +263,8 @@ export function AuditQuestionPanel({ questions }: AuditQuestionPanelProps) {
                 <Badge>{current.topic}</Badge>
                 <Badge>{current.difficulty}</Badge>
                 <Badge>{getQuestionTypeLabel(getQuestionType(current))}</Badge>
+                <Badge>{currentAttempts > 0 ? `解答履歴 ${currentAttempts}回` : "初回"}</Badge>
+                <Badge>{`過去ミス ${currentMistakes}回`}</Badge>
               </div>
               <p className="text-sm text-[var(--muted)]">{index + 1} / {quizQuestions.length}</p>
             </div>
