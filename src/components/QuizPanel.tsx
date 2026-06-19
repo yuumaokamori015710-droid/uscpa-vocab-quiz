@@ -109,7 +109,7 @@ export function QuizPanel({ subject, words, allWords, onFinish, onCancel }: Quiz
           <div className="h-full bg-[var(--accent)]" style={{ width: `${((quiz.index + 1) / words.length) * 100}%` }} />
         </div>
         <div className="mt-4 rounded-lg bg-[var(--surface)] p-3 text-sm leading-6 text-[var(--muted)]">
-          <p>毎回ランダムな順番で出題します。</p>
+          <p>解答回数が少ない単語を優先し、同じ回数の中でランダムに出題します。</p>
           <p>不正解の単語はWeak Wordsに保存されます。</p>
         </div>
         <button

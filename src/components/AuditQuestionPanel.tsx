@@ -15,6 +15,17 @@ const questionTypes: Array<QuestionType | "All"> = ["All", "calculation", "theor
 const practiceSubjects: Subject[] = ["FAR", "AUD"];
 
 const shuffle = <T,>(items: T[]) => [...items].sort(() => Math.random() - 0.5);
+const prioritizeQuestionsByFewestAttempts = (items: Question[], answers: Array<{ questionId: string }>) => {
+  const attempts = answers.reduce<Record<string, number>>((acc, answer) => {
+    acc[answer.questionId] = (acc[answer.questionId] ?? 0) + 1;
+    return acc;
+  }, {});
+
+  return shuffle(items)
+    .map((question) => ({ question, attempts: attempts[question.id] ?? 0 }))
+    .sort((a, b) => a.attempts - b.attempts)
+    .map((item) => item.question);
+};
 const getQuestionType = (question: Question): QuestionType => question.questionType ?? "theory";
 const getQuestionTypeLabel = (type: QuestionType | "All") => {
   if (type === "calculation") return "計算問題";
@@ -136,7 +147,7 @@ export function AuditQuestionPanel({ questions }: AuditQuestionPanelProps) {
 
   const startQuiz = (useReviewOnly: boolean) => {
     const source = filteredQuestions.filter((question) => !useReviewOnly || activeReviewIds.has(question.id));
-    const nextQuestions = shuffle(source).slice(0, 20);
+    const nextQuestions = prioritizeQuestionsByFewestAttempts(source, questionAnswers).slice(0, 20);
     resetQuestionSession();
     setReviewOnly(useReviewOnly);
     setQuizQuestions(nextQuestions);

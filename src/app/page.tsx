@@ -21,6 +21,17 @@ import type { Friend, Question, Subject, Word } from "@/types";
 type View = AppView | "quiz" | "result";
 
 const shuffle = <T,>(items: T[]) => [...items].sort(() => Math.random() - 0.5);
+const prioritizeByFewestAttempts = (items: Word[], answers: Array<{ wordId: string }>) => {
+  const attempts = answers.reduce<Record<string, number>>((acc, answer) => {
+    acc[answer.wordId] = (acc[answer.wordId] ?? 0) + 1;
+    return acc;
+  }, {});
+
+  return shuffle(items)
+    .map((word) => ({ word, attempts: attempts[word.id] ?? 0 }))
+    .sort((a, b) => a.attempts - b.attempts)
+    .map((item) => item.word);
+};
 
 export default function Home() {
   const [view, setView] = useState<View>("quizHome");
@@ -63,14 +74,14 @@ export default function Home() {
     const subjectWords = await wordRepository.findBySubject(subject);
     resetSession();
     setQuizSubject(subject);
-    setQuizWords(shuffle(subjectWords));
+    setQuizWords(prioritizeByFewestAttempts(subjectWords, answers));
     setView("quiz");
   };
 
   const startWeakQuiz = (reviewWords: Word[]) => {
     resetSession();
     setQuizSubject("Weak");
-    setQuizWords(shuffle(reviewWords));
+    setQuizWords(prioritizeByFewestAttempts(reviewWords, answers));
     setView("quiz");
   };
 
