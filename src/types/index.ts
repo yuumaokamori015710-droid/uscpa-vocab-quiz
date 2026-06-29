@@ -128,3 +128,32 @@ export type StudyTrack = {
   description: string;
   units: string[];
 };
+
+export type OnboardingQuestion = {
+  id: string;
+  deckId: string;
+  category: string;
+  topic: string;
+  difficulty: QuestionDifficulty;
+  question: string;
+  choices: string[];
+  correctAnswer: string;
+  explanation: string;
+  keyTakeaway: string;
+  sourceExcerpt: string;
+};
+
+export type OnboardingDeck = {
+  id: string;
+  title: string;
+  sourceName: string;
+  createdAt: string;
+  sourceText: string;
+  questions: OnboardingQuestion[];
+};
+
+export type OnboardingQuestionAnswer = {
+  questionId: string;
+  isCorrect: boolean;
+  answeredAt: string;
+};

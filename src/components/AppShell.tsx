@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import type { ReactNode } from "react";
 import { useLearningStore } from "@/store/useLearningStore";
 
-export type AppView = "quizHome" | "study" | "weak" | "friends" | "settings";
+export type AppView = "quizHome" | "deckLab" | "study" | "weak" | "friends" | "settings";
 
 type AppShellProps = {
   activeView: AppView;
@@ -16,6 +16,7 @@ export function AppShell({ activeView, onNavigate, children }: AppShellProps) {
   const theme = useLearningStore((state) => state.theme);
   const items = [
     { id: "quizHome", label: "Quiz" },
+    { id: "deckLab", label: "Deck Lab" },
     { id: "study", label: "Study" },
     { id: "weak", label: "Weak Words" },
     { id: "friends", label: "Friends" }
@@ -33,7 +34,7 @@ export function AppShell({ activeView, onNavigate, children }: AppShellProps) {
           <h1 className="mt-2 text-2xl font-semibold text-[var(--text)] sm:text-3xl">USCPA Vocab Quiz</h1>
         </div>
         <div className="flex items-center gap-3">
-          <nav className="grid flex-1 grid-cols-4 rounded-lg border border-[var(--border)] bg-[var(--card)] p-1 sm:flex sm:w-auto sm:flex-none">
+          <nav className="grid flex-1 grid-cols-3 rounded-lg border border-[var(--border)] bg-[var(--card)] p-1 sm:flex sm:w-auto sm:flex-none">
             {items.map((item) => (
               <button
                 key={item.id}

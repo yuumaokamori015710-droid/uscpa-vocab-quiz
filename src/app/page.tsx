@@ -5,6 +5,7 @@ import { AppShell } from "@/components/AppShell";
 import type { AppView } from "@/components/AppShell";
 import { AuditQuestionPanel } from "@/components/AuditQuestionPanel";
 import { FriendsPanel } from "@/components/FriendsPanel";
+import { PdfDeckBuilder } from "@/components/PdfDeckBuilder";
 import { QuizPanel } from "@/components/QuizPanel";
 import { ResultPanel } from "@/components/ResultPanel";
 import { SettingsPanel } from "@/components/SettingsPanel";
@@ -129,6 +130,7 @@ export default function Home() {
         </>
       ) : null}
 
+      {view === "deckLab" ? <PdfDeckBuilder /> : null}
       {view === "study" ? <StudyDashboard /> : null}
 
       {view === "quiz" ? (
