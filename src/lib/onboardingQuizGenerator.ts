@@ -1,6 +1,8 @@
 import type { OnboardingDeck, OnboardingQuestion } from "@/types";
 
 const MAX_QUESTIONS = 16;
+const MAX_PDF_SCAN_CHARS = 1_500_000;
+const MAX_PDF_SNIPPETS = 400;
 
 const shuffle = <T,>(items: T[]) => [...items].sort(() => Math.random() - 0.5);
 
@@ -43,15 +45,29 @@ const cleanupPdfText = (text: string) =>
     .trim();
 
 export const extractReadablePdfText = (rawPdfText: string) => {
-  const literalStrings = Array.from(rawPdfText.matchAll(/\(([^()]{12,})\)/g))
-    .map((match) => cleanupPdfText(match[1] ?? ""))
-    .filter((value) => /[A-Za-z0-9\u3040-\u30ff\u3400-\u9fff]/.test(value));
+  const source = rawPdfText.slice(0, MAX_PDF_SCAN_CHARS);
+  const snippets: string[] = [];
+  const readablePattern = /[A-Za-z0-9\u3040-\u30ff\u3400-\u9fff]/;
 
-  const textOperators = Array.from(rawPdfText.matchAll(/\[([\s\S]*?)\]\s*TJ/g))
-    .flatMap((match) => Array.from((match[1] ?? "").matchAll(/\(([^()]{6,})\)/g)).map((item) => cleanupPdfText(item[1] ?? "")))
-    .filter((value) => /[A-Za-z0-9\u3040-\u30ff\u3400-\u9fff]/.test(value));
+  const literalPattern = /\(([^()]{12,})\)/g;
+  let literalMatch: RegExpExecArray | null;
+  while (snippets.length < MAX_PDF_SNIPPETS && (literalMatch = literalPattern.exec(source))) {
+    const value = cleanupPdfText(literalMatch[1] ?? "");
+    if (readablePattern.test(value)) snippets.push(value);
+  }
 
-  return normalizeText([...literalStrings, ...textOperators].join(" "));
+  const textOperatorPattern = /\[([\s\S]*?)\]\s*TJ/g;
+  let operatorMatch: RegExpExecArray | null;
+  while (snippets.length < MAX_PDF_SNIPPETS && (operatorMatch = textOperatorPattern.exec(source))) {
+    const innerPattern = /\(([^()]{6,})\)/g;
+    let innerMatch: RegExpExecArray | null;
+    while (snippets.length < MAX_PDF_SNIPPETS && (innerMatch = innerPattern.exec(operatorMatch[1] ?? ""))) {
+      const value = cleanupPdfText(innerMatch[1] ?? "");
+      if (readablePattern.test(value)) snippets.push(value);
+    }
+  }
+
+  return normalizeText(snippets.join(" "));
 };
 
 const splitSentences = (text: string) => {

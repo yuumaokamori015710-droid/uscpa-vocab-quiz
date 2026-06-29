@@ -8,17 +8,29 @@ type QuizMode = "setup" | "quiz" | "result";
 
 const decksStorageKey = "skilldeck-onboarding-decks";
 const answersStorageKey = "skilldeck-onboarding-answers";
+const pdfReadLimitBytes = 1_500_000;
+const textReadLimitBytes = 2_000_000;
 
 const shuffle = <T,>(items: T[]) => [...items].sort(() => Math.random() - 0.5);
 
 const readFileForDeck = async (file: File) => {
   if (file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf")) {
-    const buffer = await file.arrayBuffer();
+    const safeSlice = file.slice(0, pdfReadLimitBytes);
+    const buffer = await safeSlice.arrayBuffer();
     const raw = new TextDecoder("latin1").decode(buffer);
-    return extractReadablePdfText(raw);
+    return {
+      text: extractReadablePdfText(raw),
+      wasTruncated: file.size > pdfReadLimitBytes,
+      isPdf: true
+    };
   }
 
-  return file.text();
+  const safeSlice = file.slice(0, textReadLimitBytes);
+  return {
+    text: await safeSlice.text(),
+    wasTruncated: file.size > textReadLimitBytes,
+    isPdf: false
+  };
 };
 
 const loadJson = <T,>(key: string, fallback: T): T => {
@@ -40,6 +52,7 @@ export function PdfDeckBuilder() {
   const [deckTitle, setDeckTitle] = useState("New department onboarding");
   const [sourceName, setSourceName] = useState("Manual / PDF");
   const [sourceText, setSourceText] = useState("");
+  const [isReadingFile, setIsReadingFile] = useState(false);
   const [uploadStatus, setUploadStatus] = useState("PDF or text fileを読み込むと、ここに抽出テキストが入ります。");
   const [quizQuestions, setQuizQuestions] = useState<OnboardingDeck["questions"]>([]);
   const [index, setIndex] = useState(0);
@@ -85,15 +98,33 @@ export function PdfDeckBuilder() {
   const handleFile = async (file: File | null) => {
     if (!file) return;
     setSourceName(file.name);
-    setUploadStatus("ファイルを読み込んでいます...");
-    const text = await readFileForDeck(file);
-    const trimmed = text.trim();
-    setSourceText(trimmed);
-    setUploadStatus(
-      trimmed.length >= 300
-        ? `${file.name} から ${trimmed.length.toLocaleString()} 文字を抽出しました。`
-        : "PDFの文字抽出が少なめです。スキャンPDFの場合は、下の欄にテキストを貼り付けて生成してください。"
-    );
+    setIsReadingFile(true);
+    setUploadStatus("ファイルを安全モードで読み込んでいます...");
+
+    try {
+      const result = await readFileForDeck(file);
+      const trimmed = result.text.trim();
+      setSourceText(trimmed);
+
+      if (trimmed.length >= 300) {
+        const limitNotice = result.wasTruncated ? " 大きいファイルのため先頭部分だけを読み込みました。" : "";
+        setUploadStatus(`${file.name} から ${trimmed.length.toLocaleString()} 文字を抽出しました。${limitNotice}`);
+        return;
+      }
+
+      if (result.isPdf) {
+        setUploadStatus(
+          "PDFから十分な文字を抽出できませんでした。スキャンPDF、画像PDF、圧縮PDFの可能性があります。画面は止まらないようにしたので、本文を下の欄へ貼り付けて生成してください。"
+        );
+        return;
+      }
+
+      setUploadStatus("テキスト量が少なめです。もう少し本文を追加すると、より自然なクイズになります。");
+    } catch {
+      setUploadStatus("ファイルの読み込みに失敗しました。PDFの場合は本文をコピーして下の欄に貼り付けてください。");
+    } finally {
+      setIsReadingFile(false);
+    }
   };
 
   const generateDeck = () => {
@@ -186,8 +217,12 @@ export function PdfDeckBuilder() {
           className="mt-4 min-h-36 w-full resize-y rounded-md border border-[var(--border)] bg-[var(--surface)] p-3 text-sm leading-6 text-[var(--text)] outline-none transition placeholder:text-[var(--muted)] focus:border-[var(--accent)]"
         />
 
-        <button onClick={generateDeck} className="mt-4 h-11 w-full rounded-md bg-[var(--accent)] text-sm font-semibold text-[var(--background)]">
-          クイズデッキを生成
+        <button
+          onClick={generateDeck}
+          disabled={isReadingFile}
+          className="mt-4 h-11 w-full rounded-md bg-[var(--accent)] text-sm font-semibold text-[var(--background)] disabled:cursor-not-allowed disabled:opacity-45"
+        >
+          {isReadingFile ? "読み込み中..." : "クイズデッキを生成"}
         </button>
       </aside>
 
